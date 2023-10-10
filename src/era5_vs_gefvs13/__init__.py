@@ -1,3 +1,8 @@
+"""Note From Lauryn (10/10/2023):
+    I'm having Ken look at proper package distribution config, so I'm not investigating obscure import errors.       
+    
+"""
+
 import sys
 
 if sys.version_info[:2] >= (3, 8):

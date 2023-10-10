@@ -18,7 +18,16 @@ Note:
 References:
     - https://setuptools.pypa.io/en/latest/userguide/entry_point.html
     - https://pip.pypa.io/en/stable/reference/pip_install
+    
+    ---- Python API ----
+The functions defined in this section can be imported by users in their
+Python scripts/interactive interpreter, e.g. via
+`from era5_vs_gefvs13.skeleton import fib`,
+when using this Python module as a library.
+
 """
+
+
 import numpy as np
 import pandas as pd
 import netCDF4
@@ -29,16 +38,8 @@ import logging
 import sys
 import xarray
 
-
-
 _logger = logging.getLogger(__name__)
 user_requested_vars = {}
-
-# ---- Python API ----
-# The functions defined in this section can be imported by users in their
-# Python scripts/interactive interpreter, e.g. via
-# `from era5_vs_gefvs13.skeleton import fib`,
-# when using this Python module as a library.
 
 
 def requested_vars_xarray(yml_fp, data_fp):
@@ -56,7 +57,7 @@ def setup_logging():
     """Setup basic logging
 
     Args:
-      loglevel (int): minimum loglevel for emitting messages
+    loglevel (int): minimum loglevel for emitting messages
     """
     logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
     logging.basicConfig(
@@ -67,7 +68,6 @@ def setup_logging():
 def main(args):
     """Wrapper allowing :func:`requested_vars_xarray` to be called with string arguments in a CLI fashion
     """
-    print(args)
     setup_logging()
     _logger.debug("Starting Script...")
     # Example execution: 
