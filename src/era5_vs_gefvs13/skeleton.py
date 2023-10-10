@@ -65,26 +65,20 @@ def setup_logging():
 
 
 def main(args):
-    """Wrapper allowing :func:`fib` to be called with string arguments in a CLI fashion
-
-    Instead of returning the value from :func:`fib`, it prints the result to the
-    ``stdout`` in a nicely formatted message.
-
-    Args:
-      args (List[str]): command line parameters as list of strings
-          (for example  ``["--verbose", "42"]``).
+    """Wrapper allowing :func:`requested_vars_xarray` to be called with string arguments in a CLI fashion
     """
+    print(args)
     setup_logging()
     _logger.debug("Starting Script...")
-    output = requested_vars_xarray("/home/leldridge/sandbox/s3_source_amsua_first_pass.yaml", "/home/leldridge/sandbox/bfg_1994010100_fhr03_control")
+    # Example execution: 
+    # python3 skeleton.py /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml /home/leldridge/sandbox/bfg_1994010100_fhr03_control
+    output = requested_vars_xarray(args[0], args[1])
     print(output)
     _logger.info("Script ends here")
 
 
 def run():
-    """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
-
-    This function can be used as entry point to create console scripts with setuptools.
+    """Calls :func:`main` 
     """
     main(sys.argv[1:])
 
