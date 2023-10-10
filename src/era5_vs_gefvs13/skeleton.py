@@ -23,17 +23,13 @@ import numpy as np
 import pandas as pd
 import netCDF4
 import h5netcdf
-import xarray as xr
 import yaml as yl
 import argparse
 import logging
 import sys
+import xarray
 
-from era5_vs_gefvs13 import __version__
 
-__author__ = "leldr"
-__copyright__ = "leldr"
-__license__ = "MIT"
 
 _logger = logging.getLogger(__name__)
 user_requested_vars = {}
@@ -45,12 +41,14 @@ user_requested_vars = {}
 # when using this Python module as a library.
 
 
-def requested_vars_xarray(filepath):
-    with open(filepath, 'r') as stream:
+def requested_vars_xarray(yml_fp, data_fp):
+
+    with open(yml_fp, 'r') as stream:
         out = yl.load(stream, Loader=yl.SafeLoader)
         user_requested_vars = out['requested_variables']
 
-    subset_data = data[user_requested_vars]
+    
+    subset_data = xarray.open_dataset(data_fp)[user_requested_vars]
     return subset_data
 
 
@@ -78,7 +76,7 @@ def main(args):
     """
     setup_logging()
     _logger.debug("Starting Script...")
-    output = requested_vars_xarray("/home/leldridge/sandbox/s3_source_amsua_first_pass.yaml")
+    output = requested_vars_xarray("/home/leldridge/sandbox/s3_source_amsua_first_pass.yaml", "/home/leldridge/sandbox/bfg_1994010100_fhr03_control")
     print(output)
     _logger.info("Script ends here")
 
