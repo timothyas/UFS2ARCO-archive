@@ -2,9 +2,6 @@ import pytest
 
 from era5_vs_gefvs13.skeleton import fib, main
 
-__author__ = "leldr"
-__copyright__ = "leldr"
-__license__ = "MIT"
 
 
 def test_fib():
