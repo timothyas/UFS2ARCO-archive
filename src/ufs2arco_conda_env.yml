@@ -1,4 +1,4 @@
-name: /home/leldridge/sergey aws sandbox/projreplaytest
+name: ufs2arco_env
 channels:
   - conda-forge
   - defaults
