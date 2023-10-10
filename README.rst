@@ -30,11 +30,11 @@
 |
 
 ===============
-ERA5-vs-GEFvs13
+UFS2ZARR 
 ===============
 
 
-    Add a short description here!
+    This project is apart of NOAA's Cloud Data Initiative to convert existant UFS data into a cloud-friendly format. 
 
 
 A longer description of your project goes here...

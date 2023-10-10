@@ -19,7 +19,12 @@ References:
     - https://setuptools.pypa.io/en/latest/userguide/entry_point.html
     - https://pip.pypa.io/en/stable/reference/pip_install
 """
-
+import numpy as np
+import pandas as pd
+import netCDF4
+import h5netcdf
+import xarray as xr
+import yaml as yl
 import argparse
 import logging
 import sys
@@ -31,7 +36,7 @@ __copyright__ = "leldr"
 __license__ = "MIT"
 
 _logger = logging.getLogger(__name__)
-
+user_requested_vars = {}
 
 # ---- Python API ----
 # The functions defined in this section can be imported by users in their
@@ -40,65 +45,16 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
-def fib(n):
-    """Fibonacci example function
+def requested_vars_xarray(filepath):
+    with open(filepath, 'r') as stream:
+        out = yl.load(stream, Loader=yl.SafeLoader)
+        user_requested_vars = out['requested_variables']
 
-    Args:
-      n (int): integer
-
-    Returns:
-      int: n-th Fibonacci number
-    """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
+    subset_data = data[user_requested_vars]
+    return subset_data
 
 
-# ---- CLI ----
-# The functions defined in this section are wrappers around the main Python
-# API allowing them to be called directly from the terminal as a CLI
-# executable/script.
-
-
-def parse_args(args):
-    """Parse command line parameters
-
-    Args:
-      args (List[str]): command line parameters as list of strings
-          (for example  ``["--help"]``).
-
-    Returns:
-      :obj:`argparse.Namespace`: command line parameters namespace
-    """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"ERA5-vs-GEFvs13 {__version__}",
-    )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="loglevel",
-        help="set loglevel to INFO",
-        action="store_const",
-        const=logging.INFO,
-    )
-    parser.add_argument(
-        "-vv",
-        "--very-verbose",
-        dest="loglevel",
-        help="set loglevel to DEBUG",
-        action="store_const",
-        const=logging.DEBUG,
-    )
-    return parser.parse_args(args)
-
-
-def setup_logging(loglevel):
+def setup_logging():
     """Setup basic logging
 
     Args:
@@ -106,7 +62,7 @@ def setup_logging(loglevel):
     """
     logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
     logging.basicConfig(
-        level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
+        level=10, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
     )
 
 
@@ -120,10 +76,10 @@ def main(args):
       args (List[str]): command line parameters as list of strings
           (for example  ``["--verbose", "42"]``).
     """
-    args = parse_args(args)
-    setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
-    print(f"The {args.n}-th Fibonacci number is {fib(args.n)}")
+    setup_logging()
+    _logger.debug("Starting Script...")
+    output = requested_vars_xarray("/home/leldridge/sandbox/s3_source_amsua_first_pass.yaml")
+    print(output)
     _logger.info("Script ends here")
 
 
