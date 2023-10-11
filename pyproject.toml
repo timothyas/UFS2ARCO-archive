@@ -3,7 +3,70 @@
 requires = ["setuptools>=46.1.0", "setuptools_scm[toml]>=5"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "ERA5-vs-GEFvs13"
+authors = [{ name = "leldr", email = "leldridge@wvhtf.org" }]
+maintainers = [{ name = "Ken Witt", email = "kwitt@wvhtf.org" }]
+
+description = "Initial data conversion pipeline"
+readme = "README.rst"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.8.1"
+
+dynamic = ["version"]
+
+[project.optional-dependencies]
+documentation = ["sphinx:@3.2"]
+test = [
+    "black",
+]
+
+
+[project.urls]
+Documentation = "https://github.com/HighTechnologyFoundation/ERA5-vs-GEFvs13/tree/main#readme"
+Source = "https://github.com/HighTechnologyFoundation/ERA5-vs-GEFvs13"
+Tracker = "https://github.com/HighTechnologyFoundation/ERA5-vs-GEFvs13/issues"
+
+
 [tool.setuptools_scm]
 # For smarter version schemes and other configuration options,
 # check out https://github.com/pypa/setuptools_scm
 version_scheme = "no-guess-dev"
+
+[tool.flake8]
+max-line-length = 120
+select = "F,E,W,B,B901,B902,B903"
+exclude = [
+    ".eggs",
+    ".git",
+    ".tox",
+    "nssm",
+    "obj",
+    "out",
+    "packages",
+    "pywin32",
+    "tests",
+    "swagger_client",
+]
+ignore = ["E722", "B001", "W503", "E203"]
+
+[tool.bumpver]
+current_version = "0.0.1"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "Bump version {old_version} -> {new_version}"
+commit = true
+tag = true
+push = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = ['^current_version = "{version}"']
+"src/era5_vs_gefvs13/__init__.py" = ['^__version__ = "{version}"']

@@ -19,6 +19,7 @@ __location__ = os.path.dirname(__file__)
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.join(__location__, "../src"))
+sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))  # put the parent in the path
 
 # -- Run sphinx-apidoc -------------------------------------------------------
 # This hack is necessary since RTD does not issue `sphinx-apidoc` before running
@@ -28,10 +29,11 @@ sys.path.insert(0, os.path.join(__location__, "../src"))
 # setup.py install" in the RTD Advanced Settings.
 # Additionally it helps us to avoid running apidoc manually
 
-try:  # for Sphinx >= 1.7
-    from sphinx.ext import apidoc
-except ImportError:
-    from sphinx import apidoc
+# KJW
+# try:  # for Sphinx >= 1.7
+#     from sphinx.ext import apidoc
+# except ImportError:
+#     from sphinx import apidoc
 
 output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/era5_vs_gefvs13")
@@ -40,19 +42,20 @@ try:
 except FileNotFoundError:
     pass
 
-try:
-    import sphinx
+# KJW
+# try:
+#     import sphinx
 
-    cmd_line = f"sphinx-apidoc --implicit-namespaces -f -o {output_dir} {module_dir}"
+#     cmd_line = f"sphinx-apidoc --implicit-namespaces -f -o {output_dir} {module_dir}"
 
-    args = cmd_line.split(" ")
-    if tuple(sphinx.__version__.split(".")) >= ("1", "7"):
-        # This is a rudimentary parse_version to avoid external dependencies
-        args = args[1:]
+#     args = cmd_line.split(" ")
+#     if tuple(sphinx.__version__.split(".")) >= ("1", "7"):
+#         # This is a rudimentary parse_version to avoid external dependencies
+#         args = args[1:]
 
-    apidoc.main(args)
-except Exception as e:
-    print("Running `sphinx-apidoc` failed!\n{}".format(e))
+#     apidoc.main(args)
+# except Exception as e:
+#     print("Running `sphinx-apidoc` failed!\n{}".format(e))
 
 # -- General configuration ---------------------------------------------------
 
@@ -88,7 +91,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "ERA5-vs-GEFvs13"
-copyright = "2023, leldr"
+project_copyright = "2023, High Technology Foundation"
+author = "High Technology Foundation"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
