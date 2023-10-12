@@ -48,7 +48,6 @@ def requested_vars_xarray(yml_fp, data_fp):
         out = yl.load(stream, Loader=yl.SafeLoader)
         user_requested_vars = out['requested_variables']
 
-    
     subset_data = xarray.open_dataset(data_fp)[user_requested_vars]
     return subset_data
 
