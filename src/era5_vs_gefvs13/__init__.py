@@ -6,4 +6,4 @@ Define package metadata to be visible when the package is imported
 #   Licensed under the MIT License. See LICENSE in project root for information.
 #   -------------------------------------------------------------
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
