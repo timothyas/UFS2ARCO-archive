@@ -11,11 +11,6 @@ from zarr import NestedDirectoryStore
 from datetime import datetime, timedelta
 from cftime import DatetimeJulian
 
-"""
-TODO:
-    5. turn python script into jupyter notebook
-"""
-
 class UFSDataset():
     """Open and store a UFS generated NetCDF dataset to zarr from a single model component (FV3, MOM6, CICE6)
     and a single DA window. The two main methods that are useful are :meth:`open_dataset` and :meth:`store_dataset`.
