@@ -13,11 +13,7 @@ from cftime import DatetimeJulian
 
 """
 TODO:
-    2. add fsspec, s3fs etc to environment yaml file
-    3. append multiple datasets in time
-    4. clean up the docstrings
     5. turn python script into jupyter notebook
-    6. test local storage with fsspec
 """
 
 class UFSDataset():
@@ -145,15 +141,13 @@ class UFSDataset():
 
         fnames = self.path_in(cycle, self.forecast_hours, self.file_prefixes)
 
-        fskw = fsspec_kwargs if fsspec_kwargs is not None else {}
-        with fsspec.open_files(fnames, **fskw) as f:
-            xds = xr.open_mfdataset(f, **kw)
-
-        # TODO: if we start appending to the same zarr store, this becomes unnecessary
-        xds.attrs.update({
-                "cycle"                     : str(cycle),
-                })
-
+        # Maybe there's a more elegant way to handle this, but with local files, fsspec closes them
+        # before dask reads them...
+        if fsspec_kwargs is None:
+            xds = xr.open_mfdataset(fnames, **kw)
+        else:
+            with fsspec.open_files(fnames, **fsspec_kwargs) as f:
+                xds = xr.open_mfdataset(f, **kw)
         return xds
 
 
@@ -328,7 +322,7 @@ class FV3Dataset(UFSDataset):
             "grid_xt"   : 30,
             }
 
-    def open_dataset(self, cycle, fsspec_kwargs, **kwargs):
+    def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
         xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
 
         # Deal with time
