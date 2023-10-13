@@ -62,8 +62,18 @@ class UFSDataset():
 
     def __init__(self, path_in, config_filename):
         """Look for the config yaml file, grab from it:
-        Required: lists of variables as coords and data_vars
-        Optional: chunks_in and chunks_out, determining how to read in the data and how to store it
+
+        Required fields in config:
+            path_out (str): the outermost directory to store the dataset
+            forecast_hours (list of int): with the forecast hours to save
+            file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
+                e.g. "bfg_" and "sfg_" for the physics and dynamics variables in the replay dataset
+
+        Optional fields in config:
+            coords (list of str): containing static coordinate variables to store only one time
+            data_vars (list of str): containing variables that evolve in time to be stored
+                if not provided, all variables will be stored
+            chunks_in, chunks_out (dict): containing chunksizes for each dimension
 
         Args:
             path_in (callable): map the following arguments to a path (str):
@@ -73,10 +83,13 @@ class UFSDataset():
             config_filename (str): to yaml file containing the overall configuration
 
         Sets Attributes:
+            path_out (str): the outermost directory to store the dataset
+            forecast_hours (list of int): with the forecast hours to save
+            file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
+                e.g. "bfg_" and "sfg_" for the physics and dynamics variables in the replay dataset
             coords, data_vars (list): with variable names of coordinates and data variables
             chunks_in, chunks_out (dict): specifying how to chunk the data when reading and writing
-            filenames_in, zarr_name (str): denotes the files to read in and the name to write out to
-            fhr (list): with e.g. ["0h", "3h"] to select the output at forecast hour 0 and 3
+            config (dict): with the configuration provided by the file
         """
 
         super(UFSDataset, self).__init__()
@@ -95,7 +108,7 @@ class UFSDataset():
                 raise KeyError(f"{name}.__init__: Could not find {key} in {config_filename}, but this is required")
 
         # look for these optional inputs
-        for key in ["chunks_in", "chunks_out", "zarr_name", "coords", "data_vars"]:
+        for key in ["chunks_in", "chunks_out", "coords", "data_vars"]:
             if key in self.config:
                 setattr(self, key, self.config[key])
             else:
@@ -113,7 +126,7 @@ class UFSDataset():
 
 
     def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
-        """For now, read a single timestep from each cycle
+        """Read data from a single DA cycle
 
         Args:
             cycle (datetime.datetime): datetime object giving initial time for this DA cycle
@@ -131,7 +144,6 @@ class UFSDataset():
         kw.update(kwargs)
 
         fnames = self.path_in(cycle, self.forecast_hours, self.file_prefixes)
-        print(fnames)
 
         fskw = fsspec_kwargs if fsspec_kwargs is not None else {}
         with fsspec.open_files(fnames, **fskw) as f:
@@ -167,13 +179,14 @@ class UFSDataset():
         return xds.chunk(chunks)
 
 
-    def store_dataset(self, xds):
+    def store_dataset(self, xds, **kwargs):
         """Open all netcdf files for this model component and at this DA window, store
         coordinates one time only, select data based on
         desired forecast hour, then store it.
 
         Args:
-            xds (xarray.Dataset): as provided by meth:`open_dataset`
+            xds (xarray.Dataset): as provided by :meth:`open_dataset`
+            kwargs (dict): optional arguments passed to :func:`xarray.to_zarr` via :meth:`_store_data_vars`
         """
 
         xds = xds.reset_coords()
@@ -193,7 +206,7 @@ class UFSDataset():
             data_vars = [x for x in self.data_vars if x in xds]
             xds = xds[data_vars]
 
-        self._store_data_vars(xds)
+        self._store_data_vars(xds, **kwargs)
 
 
     def _store_coordinates(self, cds):
@@ -216,7 +229,7 @@ class UFSDataset():
         print(f"Stored coordinate dataset at {self.coords_path}")
 
 
-    def _store_data_vars(self, xds):
+    def _store_data_vars(self, xds, **kwargs):
         """Store the data variables
 
         Args:
@@ -227,7 +240,7 @@ class UFSDataset():
         xds = self.chunk(xds)
 
         store = NestedDirectoryStore(path=self.forecast_path)
-        xds.to_zarr(store, mode="w")
+        xds.to_zarr(store, **kwargs)
         print(f"Stored dataset at {self.forecast_path}")
 
 

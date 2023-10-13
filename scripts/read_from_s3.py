@@ -4,7 +4,6 @@ import datetime
 import fsspec
 import xarray as xr
 
-from xesn.timer import Timer
 import sys
 sys.path.append("../src")
 from UFS2ARCO import FV3Dataset
@@ -28,15 +27,10 @@ def cached_path(date: datetime.datetime, fhrs: list, file_prefixes: list):
 
 if __name__ == "__main__":
 
-    localtime = Timer()
-
     replay = FV3Dataset(path_in=cached_path, config_filename="config-replay.yaml")
 
-    date = datetime.datetime(year=1994, month=1, day=1, hour=0)
-
-    localtime.start("reading")
-    ds = replay.open_dataset(date, fsspec_kwargs={"s3":{"anon": True}}, engine="h5netcdf")
-    localtime.stop()
-    localtime.start("writing")
-    replay.store_dataset(ds)
-    localtime.stop()
+    for hour in [0, 6]:
+        date = datetime.datetime(year=1994, month=1, day=1, hour=hour)
+        ds = replay.open_dataset(date, fsspec_kwargs={"s3":{"anon": True}}, engine="h5netcdf")
+        replay.store_dataset(ds, mode="a", append_dim="time")
+        print("stored hour ", hour)
