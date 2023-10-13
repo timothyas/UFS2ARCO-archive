@@ -1,8 +1,8 @@
 ===============
-ERA5-vs-GEFvs13
+UFS2ARCO
 ===============
 
-This is the documentation of **ERA5-vs-GEFvs13**.
+This is the documentation of **UFS2ARCO**.
 
 .. note::
 

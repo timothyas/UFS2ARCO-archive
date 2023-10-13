@@ -1,5 +1,5 @@
 """
-    Setup file for ERA5-vs-GEFvs13.
+    Setup file for UFS2ARCO.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 4.5.

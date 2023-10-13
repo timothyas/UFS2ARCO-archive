@@ -1,5 +1,5 @@
 """
-    Dummy conftest.py for era5_vs_gefvs13.
+    Dummy conftest.py for UFS2ARCO.
 
     If you don't know what this is for, just leave it empty.
     Read more about conftest.py under:

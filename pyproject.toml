@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ERA5-vs-GEFvs13"
+name = "UFS2ARCO"
 authors = [{ name = "leldr", email = "leldridge@wvhtf.org" }]
 maintainers = [{ name = "Ken Witt", email = "kwitt@wvhtf.org" }]
 
@@ -29,7 +29,7 @@ dynamic = ["version"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["era5_vs_gefvs13*"]
+include = ["UFS2ARCO*"]
 exclude = ["tests*"]
 
 
@@ -42,9 +42,9 @@ test = [
 
 
 [project.urls]
-Documentation = "https://github.com/HighTechnologyFoundation/ERA5-vs-GEFvs13/tree/main#readme"
-Source = "https://github.com/HighTechnologyFoundation/ERA5-vs-GEFvs13"
-Tracker = "https://github.com/HighTechnologyFoundation/ERA5-vs-GEFvs13/issues"
+Documentation = "https://github.com/HighTechnologyFoundation/UFS2ARCO/tree/main#readme"
+Source = "https://github.com/HighTechnologyFoundation/UFS2ARCO"
+Tracker = "https://github.com/HighTechnologyFoundation/UFS2ARCO/issues"
 
 
 [tool.setuptools_scm]
@@ -83,4 +83,4 @@ push = false
 
 [tool.bumpver.file_patterns]
 "pyproject.toml" = ['^current_version = "{version}"']
-"src/era5_vs_gefvs13/__init__.py" = ['^__version__ = "{version}"']
+"src/UFS2ARCO/__init__.py" = ['^__version__ = "{version}"']
