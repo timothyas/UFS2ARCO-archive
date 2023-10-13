@@ -27,26 +27,34 @@ when using this Python module as a library.
 
 """
 
+# pip install xarray netcdf4 h5netcdf
 
 # import numpy as np
 # import pandas as pd
 # import netCDF4
 # import h5netcdf
 # import argparse
-import yaml as yl
 import logging
 import sys
+import yaml as yl
 import xarray
 
 _logger = logging.getLogger(__name__)
-logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=10, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
+log_format = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(level=10, stream=sys.stdout, format=log_format, datefmt="%Y-%m-%d %H:%M:%S")
 
 
 def requested_vars_xarray(yml_fp: str, data_fp: str) -> xarray.Dataset:
+    """_summary_
+
+    Args:
+        yml_fp (str): _description_
+        data_fp (str): _description_
+
+    Returns:
+        xarray.Dataset: _description_
     """
-    """
-    with open(yml_fp, mode='r') as stream:
+    with open(yml_fp, mode='r', encoding="UTF-8") as stream:
         out = yl.load(stream, Loader=yl.SafeLoader)
         user_requested_vars = out['requested_variables']
 
@@ -62,6 +70,9 @@ def main(args):
 
     # Example execution:
     # python3 skeleton.py /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml /home/leldridge/sandbox/bfg_1994010100_fhr03_control
+    # python skeleton.py ../../test_files/s3_source_amsua_first_pass.yaml 'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
+
+    # /home/leldridge/sandbox/bfg_1994010100_fhr03_control
     output = requested_vars_xarray(args[0], args[1])
     print(output)
     _logger.info("Script ends here")
@@ -76,5 +87,5 @@ if __name__ == "__main__":
     # After installing your project with pip, users can also run your Python
     # modules as scripts via the ``-m`` flag, as defined in PEP 338::
     #
-    #     python -m UFS2ARCO.skeleton 42
+    #     python -m UFS2ARCO.skeleton s3_source_amsua_first_pass.yaml
     main(sys.argv[1:])

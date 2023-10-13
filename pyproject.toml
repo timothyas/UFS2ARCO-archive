@@ -34,7 +34,10 @@ exclude = ["tests*"]
 
 
 [project.optional-dependencies]
-dev = []
+dev = [
+    "netcdf4",
+    "h5netcdf",
+]
 documentation = ["sphinx:@3.2"]
 test = [
     "black",
