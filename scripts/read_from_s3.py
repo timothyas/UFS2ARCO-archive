@@ -3,6 +3,7 @@ from os.path import join
 import datetime
 import fsspec
 import xarray as xr
+import time
 
 import sys
 sys.path.append("../src")
@@ -27,10 +28,16 @@ def cached_path(date: datetime.datetime, fhrs: list, file_prefixes: list):
 
 if __name__ == "__main__":
 
+    t0 = time.perf_counter()
     replay = FV3Dataset(path_in=cached_path, config_filename="config-replay.yaml")
 
+    kw = {"mode": "w"}
     for hour in [0, 6]:
         date = datetime.datetime(year=1994, month=1, day=1, hour=hour)
         ds = replay.open_dataset(date, fsspec_kwargs={"s3":{"anon": True}}, engine="h5netcdf")
-        replay.store_dataset(ds, mode="a", append_dim="time")
+        replay.store_dataset(ds, **kw)
+        kw = {"mode": "a", "append_dim":"time"}
         print("stored hour ", hour)
+
+    dt = time.perf_counter() - t0
+    print(f"total time:  {dt:.4f} seconds")
