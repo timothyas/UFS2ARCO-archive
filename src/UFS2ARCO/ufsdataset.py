@@ -18,14 +18,40 @@ TODO:
 
 class UFSDataset():
     """Open and store a UFS generated NetCDF dataset to zarr from a single model component (FV3, MOM6, CICE6)
-    and a single DA window. Note that this class does nothing on its own, only the children
-    (FV3Dataset, MOMDataset, and CICEDataset) will work.
+    and a single DA window. The two main methods that are useful are :meth:`open_dataset` and :meth:`store_dataset`.
 
-    The two main methods that are useful are :meth:`open_dataset` and :meth:`store_dataset`.
+    Note:
+        This class does nothing on its own, only the children (for now just :class:`FV3Dataset`) will work.
 
     Note:
         The ``path_in`` argument on __init__ probably needs some attention, especially in relation to the ``file_prefixes`` option. This should be addressed once we start thinking about datasets other than replay.
+
+    Required Fields in Config:
+        path_out (str): the outermost directory to store the dataset
+        forecast_hours (list of int): with the forecast hours to save
+        file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
+
+    Optional Fields in Config:
+        coords (list of str): containing static coordinate variables to store only one time
+        data_vars (list of str): containing variables that evolve in time to be stored if not provided, all variables will be stored
+        chunks_in, chunks_out (dict): containing chunksizes for each dimension
+
+    Args:
+        path_in (callable): map the following arguments to a path (str):
+        cycle (datetime.datetime): with the date/time of the current DA cycle (to be read)
+        forecast_hours (list of int): with the hours of forecast data to read, e.g. [3, 6]
+        file_prefixes (list of str): with the filename prefixes to read, e.g. ["sfg", "bfg"] to read all files starting with this prefix at this cycle, for all forecast_hours
+        config_filename (str): to yaml file containing the overall configuration
+
+    Sets Attributes:
+        path_out (str): the outermost directory to store the dataset
+        forecast_hours (list of int): with the forecast hours to save
+        file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
+        coords, data_vars (list): with variable names of coordinates and data variables
+        chunks_in, chunks_out (dict): specifying how to chunk the data when reading and writing
+        config (dict): with the configuration provided by the file
     """
+
     path_out        = ""
     forecast_hours  = None
     file_prefixes   = None
@@ -57,36 +83,6 @@ class UFSDataset():
 
 
     def __init__(self, path_in, config_filename):
-        """Look for the config yaml file, grab from it:
-
-        Required fields in config:
-            path_out (str): the outermost directory to store the dataset
-            forecast_hours (list of int): with the forecast hours to save
-            file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
-                e.g. "bfg_" and "sfg_" for the physics and dynamics variables in the replay dataset
-
-        Optional fields in config:
-            coords (list of str): containing static coordinate variables to store only one time
-            data_vars (list of str): containing variables that evolve in time to be stored
-                if not provided, all variables will be stored
-            chunks_in, chunks_out (dict): containing chunksizes for each dimension
-
-        Args:
-            path_in (callable): map the following arguments to a path (str):
-                cycle (datetime.datetime): with the date/time of the current DA cycle (to be read)
-                forecast_hours (list of int): with the hours of forecast data to read, e.g. [3, 6]
-                file_prefixes (list of str): with the filename prefixes to read, e.g. ["sfg", "bfg"] to read all files starting with this prefix at this cycle, for all forecast_hours
-            config_filename (str): to yaml file containing the overall configuration
-
-        Sets Attributes:
-            path_out (str): the outermost directory to store the dataset
-            forecast_hours (list of int): with the forecast hours to save
-            file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
-                e.g. "bfg_" and "sfg_" for the physics and dynamics variables in the replay dataset
-            coords, data_vars (list): with variable names of coordinates and data variables
-            chunks_in, chunks_out (dict): specifying how to chunk the data when reading and writing
-            config (dict): with the configuration provided by the file
-        """
 
         super(UFSDataset, self).__init__()
         name = self.__class__.__name__ # e.g., FV3Dataset, MOMDataset
@@ -308,6 +304,7 @@ class UFSDataset():
 
 
 class FV3Dataset(UFSDataset):
+
     zarr_name   = "fv3.zarr"
     chunks_in   = {
             "pfull"     : 5,

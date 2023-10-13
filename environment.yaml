@@ -24,3 +24,5 @@ dependencies:
 # filesystem
     - fsspec
     - s3fs
+# docs
+    - sphinx
