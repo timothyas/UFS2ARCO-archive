@@ -1,6 +1,6 @@
 import pytest
 
-from era5_vs_gefvs13.skeleton import fib, main
+from era5_vs_gefvs13.skeleton import skeleton, main
 
 
 def test_fib():

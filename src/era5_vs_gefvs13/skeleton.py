@@ -28,23 +28,25 @@ when using this Python module as a library.
 """
 
 
-import numpy as np
-import pandas as pd
-import netCDF4
-import h5netcdf
+# import numpy as np
+# import pandas as pd
+# import netCDF4
+# import h5netcdf
+# import argparse
 import yaml as yl
-import argparse
 import logging
 import sys
 import xarray
 
 _logger = logging.getLogger(__name__)
-user_requested_vars = {}
+logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+logging.basicConfig(level=10, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S")
 
 
-def requested_vars_xarray(yml_fp, data_fp):
-
-    with open(yml_fp, 'r') as stream:
+def requested_vars_xarray(yml_fp: str, data_fp: str) -> xarray.Dataset:
+    """
+    """
+    with open(yml_fp, mode='r') as stream:
         out = yl.load(stream, Loader=yl.SafeLoader)
         user_requested_vars = out['requested_variables']
 
@@ -52,34 +54,17 @@ def requested_vars_xarray(yml_fp, data_fp):
     return subset_data
 
 
-def setup_logging():
-    """Setup basic logging
-
-    Args:
-    loglevel (int): minimum loglevel for emitting messages
-    """
-    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(
-        level=10, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
-    )
-
-
 def main(args):
-    """Wrapper allowing :func:`requested_vars_xarray` to be called with string arguments in a CLI fashion
     """
-    setup_logging()
+    Wrapper allowing :func:`requested_vars_xarray` to be called with string arguments in a CLI fashion
+    """
     _logger.debug("Starting Script...")
-    # Example execution: 
+
+    # Example execution:
     # python3 skeleton.py /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml /home/leldridge/sandbox/bfg_1994010100_fhr03_control
     output = requested_vars_xarray(args[0], args[1])
     print(output)
     _logger.info("Script ends here")
-
-
-def run():
-    """Calls :func:`main` 
-    """
-    main(sys.argv[1:])
 
 
 if __name__ == "__main__":
@@ -92,5 +77,4 @@ if __name__ == "__main__":
     # modules as scripts via the ``-m`` flag, as defined in PEP 338::
     #
     #     python -m era5_vs_gefvs13.skeleton 42
-    #
-    run()
+    main(sys.argv[1:])
