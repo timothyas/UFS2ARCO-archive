@@ -1,10 +1,11 @@
 FV3Dataset:
-    #    filenames_in:
-    #        - dynf*.nc
-    #        - phyf*.nc
+    file_prefixes:
+        - bfg_
+        - sfg_
+
     path_out        : "replay-1deg"
     zarr_name       : fv3.zarr
-    forecast_hours  : [3, 6, 9]
+    forecast_hours  : [0, 3, 6]
 
     chunks_in:
         time        : 1
@@ -27,13 +28,13 @@ FV3Dataset:
         - bk
 
     data_vars:
-        #        - tmp
-        #        - ugrd
-        #        - vgrd
-        #        - dpres
-        #        - delz
-        #        - spfh
-        #        - o3mr
+        - tmp
+        - ugrd
+        - vgrd
+        - dpres
+        - delz
+        - spfh
+        - o3mr
         - soilt1
         - soilt2
         - soilt3

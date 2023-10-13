@@ -11,15 +11,28 @@ from zarr import NestedDirectoryStore
 from datetime import datetime, timedelta
 from cftime import DatetimeJulian
 
+"""
+TODO:
+    2. add fsspec, s3fs etc to environment yaml file
+    3. append multiple datasets in time
+    4. clean up the docstrings
+    5. turn python script into jupyter notebook
+    6. test local storage with fsspec
+"""
+
 class UFSDataset():
     """Open and store a UFS generated NetCDF dataset to zarr from a single model component (FV3, MOM6, CICE6)
     and a single DA window. Note that this class does nothing on its own, only the children
     (FV3Dataset, MOMDataset, and CICEDataset) will work.
 
     The two main methods that are useful are :meth:`open_dataset` and :meth:`store_dataset`.
+
+    Note:
+        The ``path_in`` argument on __init__ probably needs some attention, especially in relation to the ``file_prefixes`` option. This should be addressed once we start thinking about datasets other than replay.
     """
     path_out        = ""
     forecast_hours  = None
+    file_prefixes   = None
 
     chunks_in       = None
     chunks_out      = None
@@ -42,6 +55,7 @@ class UFSDataset():
         kw = {"parallel"        : True,
               "chunks"          : self.chunks_in,
               "decode_times"    : True,
+              "preprocess"      : self._preprocess,
               }
         return kw
 
@@ -55,6 +69,7 @@ class UFSDataset():
             path_in (callable): map the following arguments to a path (str):
                 cycle (datetime.datetime): with the date/time of the current DA cycle (to be read)
                 forecast_hours (list of int): with the hours of forecast data to read, e.g. [3, 6]
+                file_prefixes (list of str): with the filename prefixes to read, e.g. ["sfg", "bfg"] to read all files starting with this prefix at this cycle, for all forecast_hours
             config_filename (str): to yaml file containing the overall configuration
 
         Sets Attributes:
@@ -73,7 +88,7 @@ class UFSDataset():
             self.config = contents[name]
 
         # look for these requited inputs
-        for key in ["path_out", "forecast_hours"]: # TBD: add filenames
+        for key in ["path_out", "forecast_hours", "file_prefixes"]:
             try:
                 setattr(self, key, self.config[key])
             except KeyError:
@@ -93,9 +108,8 @@ class UFSDataset():
         if self.data_vars is None:
             warnings.warn(f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables")
 
-        ## set filenames_in, which we read from
-        #self.filenames_in = mystuff["filenames_in"]
-        #self.filenames_in = [self.filenames_in] if isinstance(self.filenames_in, str) else self.filenames_in
+        # check that file_prefixes is a list
+        self.file_prefixes = [self.file_prefixes] if isinstance(self.file_prefixes, str) else self.file_prefixes
 
 
     def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
@@ -104,7 +118,8 @@ class UFSDataset():
         Args:
             cycle (datetime.datetime): datetime object giving initial time for this DA cycle
             fsspec_kwargs (dict, optional): optional arguments passed to :func:`fsspec.open_files`
-            **kwargs (dict, optional): optional arguments passed to :func:`xarray.open_mfdataset`
+            **kwargs (dict, optional): optional arguments passed to :func:`xarray.open_mfdataset`, in addition to
+                the ones provided by :attr:`default_open_dataset_kwargs`
 
         Returns:
             xds (xarray.Dataset): with output from a single model component (e.g., FV3)
@@ -115,13 +130,14 @@ class UFSDataset():
         kw = self.default_open_dataset_kwargs.copy()
         kw.update(kwargs)
 
-        fnames = self.path_in(cycle, self.forecast_hours)
+        fnames = self.path_in(cycle, self.forecast_hours, self.file_prefixes)
+        print(fnames)
 
         fskw = fsspec_kwargs if fsspec_kwargs is not None else {}
         with fsspec.open_files(fnames, **fskw) as f:
             xds = xr.open_mfdataset(f, **kw)
 
-        # Date is not supplied explicitly right now, just via more general pathargs
+        # TODO: if we start appending to the same zarr store, this becomes unnecessary
         xds.attrs.update({
                 "cycle"                     : str(cycle),
                 })
@@ -213,6 +229,26 @@ class UFSDataset():
         store = NestedDirectoryStore(path=self.forecast_path)
         xds.to_zarr(store, mode="w")
         print(f"Stored dataset at {self.forecast_path}")
+
+
+    @staticmethod
+    def _preprocess(xds):
+        """Used to remove a redundant surface pressure found in both physics and dynamics FV3 files,
+        which are slightly different and so cause a conflict. This method is not used on its own, but
+        given as an option to :func:`xarray.open_mfdataset`
+
+        Args:
+            xds (xarray.Dataset): A single netcdf file from the background forecast
+
+        Returns:
+            xds (xarray.Dataset): with ``pressfc`` variable removed if this is from FV3 dynamics output
+        """
+        # We can't rely on xds.encoding when reading from s3, so have to infer if this is dynamics
+        # vs physics dataset by the other fields that exist in the dataset
+        dyn_vars = ["tmp", "ugrd", "vgrd", "spfh", "o3mr"]
+        if "pressfc" in xds.data_vars and any(v in xds.data_vars for v in dyn_vars):
+            del xds["pressfc"]
+        return xds
 
 
     @staticmethod

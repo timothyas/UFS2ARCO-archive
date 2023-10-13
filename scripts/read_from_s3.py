@@ -9,17 +9,19 @@ import sys
 sys.path.append("../src")
 from UFS2ARCO import FV3Dataset
 
-def replay_path(date: datetime.datetime, fhrs: list):
-    """TODO: expand to dynamics variables"""
+def replay_path(date: datetime.datetime, fhrs: list, file_prefixes: list):
 
     upper = "s3://noaa-ufs-gefsv13replay-pds/1deg"
     this_dir = f"{date.year:04d}/{date.month:02d}/{date.year:04d}{date.month:02d}{date.day:02d}{date.hour:02d}"
-    files = [f"bfg_{date.year:04d}{date.month:02d}{date.day:02d}{date.hour:02d}_fhr{fhr:02d}_control"
-             for fhr in fhrs]
+    files = []
+    for fp in file_prefixes:
+        for fhr in fhrs:
+            files.append(
+                    f"{fp}{date.year:04d}{date.month:02d}{date.day:02d}{date.hour:02d}_fhr{fhr:02d}_control")
     return [join(upper, this_dir, this_file) for this_file in files]
 
-def cached_path(date: datetime.datetime, fhrs: list):
-    return [f"simplecache::{u}" for u in replay_path(date, fhrs)]
+def cached_path(date: datetime.datetime, fhrs: list, file_prefixes: list):
+    return [f"simplecache::{u}" for u in replay_path(date, fhrs, file_prefixes)]
 
 
 
