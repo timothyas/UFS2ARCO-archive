@@ -48,7 +48,7 @@ package_dir =
 # new major versions. This works if the required packages follow Semantic Versioning.
 # For more information, check out https://semver.org/.
 install_requires =
-    importlib-metadata; python_version<"3.8"
+    importlib-metadata
 
 
 [options.packages.find]
@@ -115,9 +115,4 @@ exclude =
     dist
     .eggs
     docs/conf.py
-
-[pyscaffold]
-# PyScaffold's parameters when the project was created.
-# This will be used when updating. Do not change!
-version = 4.5
-package = era5_vs_gefvs13
+    

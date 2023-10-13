@@ -1,6 +1,5 @@
 [build-system]
-# AVOID CHANGING REQUIRES: IT WILL BE UPDATED BY PYSCAFFOLD!
-requires = ["setuptools>=46.1.0", "setuptools_scm[toml]>=5"]
+requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,6 +9,7 @@ maintainers = [{ name = "Ken Witt", email = "kwitt@wvhtf.org" }]
 
 description = "Initial data conversion pipeline"
 readme = "README.rst"
+requires-python = ">=3.8.1"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -20,11 +20,21 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
-requires-python = ">=3.8.1"
+dependencies = [
+]
 
 dynamic = ["version"]
 
+[tool.setuptools]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["era5_vs_gefvs13*"]
+exclude = ["tests*"]
+
+
 [project.optional-dependencies]
+dev = []
 documentation = ["sphinx:@3.2"]
 test = [
     "black",
@@ -56,6 +66,10 @@ exclude = [
     "pywin32",
     "tests",
     "swagger_client",
+    "build",
+    "dist",
+    ".rst",
+
 ]
 ignore = ["E722", "B001", "W503", "E203"]
 

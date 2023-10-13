@@ -3,7 +3,6 @@ import pytest
 from era5_vs_gefvs13.skeleton import fib, main
 
 
-
 def test_fib():
     """API Tests"""
     assert fib(1) == 1
