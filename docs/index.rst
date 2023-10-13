@@ -34,7 +34,9 @@ Contents
    License <license>
    Authors <authors>
    Changelog <changelog>
-   Module Reference <api/modules>
+
+.. KJW: This doesn't exist... yet?
+.. Module Reference <api/modules>
 
 
 Indices and tables

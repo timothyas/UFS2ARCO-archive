@@ -22,20 +22,16 @@
     .. image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter
         :alt: Twitter
         :target: https://twitter.com/ERA5-vs-GEFvs13
+    .. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
+        :alt: Project generated with PyScaffold
+        :target: https://pyscaffold.org/
 
-.. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
-    :alt: Project generated with PyScaffold
-    :target: https://pyscaffold.org/
-
-|
 
 ===============
-UFS2ZARR 
+UFS2ARCO
 ===============
-
 
     This project is apart of NOAA's Cloud Data Initiative to convert existant UFS data into a cloud-friendly format. 
-
 
 A longer description of your project goes here...
 

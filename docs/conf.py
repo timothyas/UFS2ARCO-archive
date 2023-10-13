@@ -19,6 +19,7 @@ __location__ = os.path.dirname(__file__)
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.join(__location__, "../src"))
+sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))  # put the parent in the path
 
 # -- Run sphinx-apidoc -------------------------------------------------------
 # This hack is necessary since RTD does not issue `sphinx-apidoc` before running
@@ -28,10 +29,11 @@ sys.path.insert(0, os.path.join(__location__, "../src"))
 # setup.py install" in the RTD Advanced Settings.
 # Additionally it helps us to avoid running apidoc manually
 
-try:  # for Sphinx >= 1.7
-    from sphinx.ext import apidoc
-except ImportError:
-    from sphinx import apidoc
+# KJW
+# try:  # for Sphinx >= 1.7
+#     from sphinx.ext import apidoc
+# except ImportError:
+#     from sphinx import apidoc
 
 output_dir = os.path.join(__location__, "api")
 module_dir = os.path.join(__location__, "../src/era5_vs_gefvs13")
@@ -40,27 +42,9 @@ try:
 except FileNotFoundError:
     pass
 
-try:
-    import sphinx
 
-    cmd_line = f"sphinx-apidoc --implicit-namespaces -f -o {output_dir} {module_dir}"
-
-    args = cmd_line.split(" ")
-    if tuple(sphinx.__version__.split(".")) >= ("1", "7"):
-        # This is a rudimentary parse_version to avoid external dependencies
-        args = args[1:]
-
-    apidoc.main(args)
-except Exception as e:
-    print("Running `sphinx-apidoc` failed!\n{}".format(e))
-
-# -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.0'
-
-# Add any Sphinx extension module names here, as strings. They can be extensions
-# coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
@@ -88,7 +72,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "ERA5-vs-GEFvs13"
-copyright = "2023, leldr"
+project_copyright = "2023, High Technology Foundation"
+author = "High Technology Foundation"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -122,7 +107,7 @@ release = version
 # directories to ignore when looking for source files.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv"]
 
-# The reST default role (used for this markup: `text`) to use for all documents.
+# The reST default role (used for this markup: `text`) to use for all documents
 # default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
@@ -145,19 +130,18 @@ pygments_style = "sphinx"
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
 
-# If this is True, todo emits a warning for each TODO entries. The default is False.
+# If this is True, todo emits a warning for each TODO entries. The default is False
 todo_emit_warnings = True
 
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-html_theme = "alabaster"
+# html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+html_theme = "alabaster"
 html_theme_options = {
     "sidebar_width": "300px",
     "page_width": "1200px"
@@ -233,20 +217,20 @@ htmlhelp_basename = "ERA5-vs-GEFvs13-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
-
 latex_elements = {
     # The paper size ("letterpaper" or "a4paper").
-    # "papersize": "letterpaper",
+    "papersize": "letterpaper",
     # The font size ("10pt", "11pt" or "12pt").
-    # "pointsize": "10pt",
+    "pointsize": "12pt",
     # Additional stuff for the LaTeX preamble.
     # "preamble": "",
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, documentclass [howto/manual]).
+# (source start file, target name, title, author, documentclass [howto|manual])
 latex_documents = [
-    ("index", "user_guide.tex", "ERA5-vs-GEFvs13 Documentation", "leldr", "manual")
+    ("index", "user_guide.tex", "ERA5-vs-GEFvs13 Documentation",
+     "High Technlogy Foundation", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
