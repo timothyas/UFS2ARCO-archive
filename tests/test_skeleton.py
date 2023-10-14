@@ -1,5 +1,10 @@
 """
 This is a set of tests to exercise the skeleton.py program
+
+KJW: To make the testing work I had to, I think, 'install' this project as an
+    editable package by exectuting:
+        ``python -m pip install -e .``
+    from the path containing the UFS2ARCO package.  (e.g. `E:/temp/UFS2ARCO`)
 """
 
 from UFS2ARCO import skeleton

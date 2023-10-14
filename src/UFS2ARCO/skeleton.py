@@ -1,28 +1,14 @@
 """
-This is a skeleton file that can serve as a starting point for a Python
-console script. To run this script uncomment the following lines in the
-``[options.entry_points]`` section in ``setup.cfg``::
+This skeleton file serves as a starting point for a Python console script.
 
-    console_scripts =
-         fibonacci = UFS2ARCO.skeleton:run
+Run ``pip install .`` (or ``pip install -e .`` for editable mode) to install
+the UFS2ARCO package.
+This will install the command ``skeleton.main`` inside your current environment.
 
-Then run ``pip install .`` (or ``pip install -e .`` for editable mode)
-which will install the command ``fibonacci`` inside your current environment.
-
-Besides console scripts, the header (i.e. until ``_logger``...) of this file can
-also be used as template for Python modules.
-
-Note:
-    This file can be renamed depending on your needs or safely removed if not needed.
-
-References:
-    - https://setuptools.pypa.io/en/latest/userguide/entry_point.html
-    - https://pip.pypa.io/en/stable/reference/pip_install
-    
     ---- Python API ----
+
 The functions defined in this section can be imported by users in their
-Python scripts/interactive interpreter, e.g. via
-`from UFS2ARCO.skeleton import fib`,
+Python scripts/interactive interpreter, e.g. via ``from UFS2ARCO import skeleton``
 when using this Python module as a library.
 
 """
@@ -37,68 +23,64 @@ when using this Python module as a library.
 import pathlib
 import logging
 import sys
-import yaml as yl
+import inspect
+import yaml
 import xarray
 
 _logger = logging.getLogger(__name__)
-log_format = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-logging.basicConfig(level=10, stream=sys.stdout, format=log_format, datefmt="%Y-%m-%d %H:%M:%S")
+handler = logging.FileHandler(f'{__file__}.log')
+formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:: %(message)s')
+handler.setFormatter(formatter)
+_logger.addHandler(handler)
 
 
-def requested_vars_xarray(yml_fp: str, data_fp: str) -> xarray.Dataset:
+def requested_vars_xarray(yml_fn: str, data_fn: str) -> xarray.Dataset:
     """_summary_
 
     Args:
-        yml_fp (str): _description_
-        data_fp (str): _description_
+        yml_fn (str): The YAML configuration file
+        data_fn (str): The data file to be extracted from
 
     Returns:
-        xarray.Dataset: _description_
+        xarray.Dataset: The subset of `data_fn` as desribed by `yml_fn`
     """
-    with open(yml_fp, mode='r', encoding="UTF-8") as stream:
-        out = yl.load(stream, Loader=yl.SafeLoader)
+    _logger.debug(f'Opening file: {yml_fn}')
+    with open(yml_fn, mode='r', encoding="UTF-8") as stream:
+        out = yaml.load(stream, Loader=yaml.SafeLoader)
         user_requested_vars = out['requested_variables']
 
-    subset_data = xarray.open_dataset(data_fp)[user_requested_vars]
+    _logger.debug('subsetting data')
+    subset_data = xarray.open_dataset(data_fn)[user_requested_vars]
+    _logger.debug(f'returning from {inspect.currentframe().f_code.co_name}')
     return subset_data
 
 
-def main(args) -> int:
+def main(yaml_file: str, data_file: str) -> int:
     """
     Wrapper allowing :func:`requested_vars_xarray` to be called with string arguments in a CLI fashion
 
     Args:
-        args (Array[str]): This is a two element list of strings to drive the data conversion
-        The first element is the YAML configuration filename
-        The second element is the data filename
+        yaml_file (str): This string is the YAML configuration filename
+        data_file (str): This string is the data filename
 
     Returns:
         int: An integer = 0 if successful, otherwise 1
     """
-    _logger.debug("Starting Script...")
-
-    # Example execution:
-    # python3 skeleton.py /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml /home/leldridge/sandbox/bfg_1994010100_fhr03_control
-    # python skeleton.py ../../test_files/s3_source_amsua_first_pass.yaml 'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
+    _logger.debug(f"main called with parameters yaml_file: {yaml_file}, and data_file: {data_file}")
 
     # /home/leldridge/sandbox/bfg_1994010100_fhr03_control
-    if len(args) != 2:
-        _logger.error(f'main called with the incorrect number of parameters.  Should be 2, was {len(args)}')
-        return 1
-
-    yaml_file = args[0]
     if not pathlib.Path(yaml_file).is_file():
         _logger.error(f'The file {yaml_file} does not exist.')
         return 1
-    
-    data_file = args[1]
+
     if not pathlib.Path(data_file).is_file():
         _logger.error(f'The file {data_file} does not exist.')
         return 1
 
     output = requested_vars_xarray(yaml_file, data_file)
     print(output)
-    _logger.debug("successful call.")
+    _logger.debug("successful call")
+
     return 0
 
 
@@ -108,8 +90,15 @@ if __name__ == "__main__":
     #    executing it as a script.
     #    https://docs.python.org/3/library/__main__.html
 
-    # After installing your project with pip, users can also run your Python
-    # modules as scripts via the ``-m`` flag, as defined in PEP 338::
-    #
-    #     python -m UFS2ARCO.skeleton s3_source_amsua_first_pass.yaml
-    main(sys.argv[1:])
+    # Example execution:
+    # python -m UFS2ARCO.skeleton /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml /home/leldridge/sandbox/bfg_1994010100_fhr03_control
+    # python -m UFS2ARCO.skeleton test_files/s3_source_amsua_first_pass.yaml 'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
+
+    if len(sys.argv) != 3:
+        _logger.error('skeleton.py called with the incorrect number of parameters:'
+                      f'  Should be 2, was {len(sys.argv)-1}')
+        sys.exit()
+
+    _logger.debug(f'__main__ called with parameters {sys.argv[1:2][0]} and {sys.argv[2:3][0]}')
+    main(sys.argv[1:2][0], sys.argv[2:3][0])
+    _logger.debug('__main__ exiting')
