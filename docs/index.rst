@@ -29,14 +29,15 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   modules
+
    Overview <readme>
    Contributions & Help <contributing>
    License <license>
    Authors <authors>
    Changelog <changelog>
 
-.. KJW: This doesn't exist... yet?
-.. Module Reference <api/modules>
+..    Module Reference <api/modules>
 
 
 Indices and tables
