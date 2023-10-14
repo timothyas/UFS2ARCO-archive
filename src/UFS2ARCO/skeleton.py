@@ -27,13 +27,14 @@ when using this Python module as a library.
 
 """
 
-# pip install xarray netcdf4 h5netcdf
+# pip install xarray netcdf4 h5netcdf pyyaml
 
 # import numpy as np
 # import pandas as pd
 # import netCDF4
 # import h5netcdf
 # import argparse
+import pathlib
 import logging
 import sys
 import yaml as yl
@@ -62,9 +63,17 @@ def requested_vars_xarray(yml_fp: str, data_fp: str) -> xarray.Dataset:
     return subset_data
 
 
-def main(args):
+def main(args) -> int:
     """
     Wrapper allowing :func:`requested_vars_xarray` to be called with string arguments in a CLI fashion
+
+    Args:
+        args (Array[str]): This is a two element list of strings to drive the data conversion
+        The first element is the YAML configuration filename
+        The second element is the data filename
+
+    Returns:
+        int: An integer = 0 if successful, otherwise 1
     """
     _logger.debug("Starting Script...")
 
@@ -73,9 +82,24 @@ def main(args):
     # python skeleton.py ../../test_files/s3_source_amsua_first_pass.yaml 'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
 
     # /home/leldridge/sandbox/bfg_1994010100_fhr03_control
-    output = requested_vars_xarray(args[0], args[1])
+    if len(args) != 2:
+        _logger.error(f'main called with the incorrect number of parameters.  Should be 2, was {len(args)}')
+        return 1
+
+    yaml_file = args[0]
+    if not pathlib.Path(yaml_file).is_file():
+        _logger.error(f'The file {yaml_file} does not exist.')
+        return 1
+    
+    data_file = args[1]
+    if not pathlib.Path(data_file).is_file():
+        _logger.error(f'The file {data_file} does not exist.')
+        return 1
+
+    output = requested_vars_xarray(yaml_file, data_file)
     print(output)
-    _logger.info("Script ends here")
+    _logger.debug("successful call.")
+    return 0
 
 
 if __name__ == "__main__":
