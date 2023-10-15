@@ -25,6 +25,9 @@ dependencies = [
     "numpy > 1.22",
     "packaging > 21.3",
     "pandas >1.4",
+    "fsspec",
+    "zarr",
+    "cftime",
 ]
 
 dynamic = ["version"]

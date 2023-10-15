@@ -1,3 +1,6 @@
+# require packages for this file
+# python -m pip install fsspec pyyaml numpy xarray zarr cftime
+
 import os
 from os.path import join
 import fsspec
@@ -11,7 +14,8 @@ from zarr import NestedDirectoryStore
 from datetime import datetime, timedelta
 from cftime import DatetimeJulian
 
-class UFSDataset():
+
+class UFSDataset:
     """Open and store a UFS generated NetCDF dataset to zarr from a single model component (FV3, MOM6, CICE6)
     and a single DA window. The two main methods that are useful are :meth:`open_dataset` and :meth:`store_dataset`.
 
@@ -47,15 +51,15 @@ class UFSDataset():
         config (dict): with the configuration provided by the file
     """
 
-    path_out        = ""
-    forecast_hours  = None
-    file_prefixes   = None
+    path_out = ""
+    forecast_hours = None
+    file_prefixes = None
 
-    chunks_in       = None
-    chunks_out      = None
-    coords          = None
-    data_vars       = None
-    zarr_name       = None
+    chunks_in = None
+    chunks_out = None
+    coords = None
+    data_vars = None
+    zarr_name = None
 
     @property
     def forecast_path(self):
@@ -69,18 +73,17 @@ class UFSDataset():
 
     @property
     def default_open_dataset_kwargs(self):
-        kw = {"parallel"        : True,
-              "chunks"          : self.chunks_in,
-              "decode_times"    : True,
-              "preprocess"      : self._preprocess,
-              }
+        kw = {
+            "parallel": True,
+            "chunks": self.chunks_in,
+            "decode_times": True,
+            "preprocess": self._preprocess,
+        }
         return kw
 
-
     def __init__(self, path_in, config_filename):
-
         super(UFSDataset, self).__init__()
-        name = self.__class__.__name__ # e.g., FV3Dataset, MOMDataset
+        name = self.__class__.__name__  # e.g., FV3Dataset, MOMDataset
 
         self.path_in = path_in
         with open(config_filename, "r") as f:
@@ -103,14 +106,17 @@ class UFSDataset():
 
         # warn user about not finding coords
         if self.coords is None:
-            warnings.warn(f"{name}.__init__: Could not find 'coords' in {config_filename}, will not store coordinate data")
+            warnings.warn(
+                f"{name}.__init__: Could not find 'coords' in {config_filename}, will not store coordinate data"
+            )
 
         if self.data_vars is None:
-            warnings.warn(f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables")
+            warnings.warn(
+                f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables"
+            )
 
         # check that file_prefixes is a list
         self.file_prefixes = [self.file_prefixes] if isinstance(self.file_prefixes, str) else self.file_prefixes
-
 
     def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
         """Read data from a single DA cycle
@@ -141,7 +147,6 @@ class UFSDataset():
                 xds = xr.open_mfdataset(f, **kw)
         return xds
 
-
     def chunk(self, xds):
         """Using the yaml-provided or default chunking scheme, chunk all arrays in this dataset
 
@@ -162,7 +167,6 @@ class UFSDataset():
 
         xds = xds.transpose(*list(chunks.keys()))
         return xds.chunk(chunks)
-
 
     def store_dataset(self, xds, **kwargs):
         """Open all netcdf files for this model component and at this DA window, store
@@ -193,7 +197,6 @@ class UFSDataset():
 
         self._store_data_vars(xds, **kwargs)
 
-
     def _store_coordinates(self, cds):
         """Store the static coordinate information to zarr
 
@@ -213,7 +216,6 @@ class UFSDataset():
         cds.to_zarr(store, mode="w")
         print(f"Stored coordinate dataset at {self.coords_path}")
 
-
     def _store_data_vars(self, xds, **kwargs):
         """Store the data variables
 
@@ -227,7 +229,6 @@ class UFSDataset():
         store = NestedDirectoryStore(path=self.forecast_path)
         xds.to_zarr(store, **kwargs)
         print(f"Stored dataset at {self.forecast_path}")
-
 
     @staticmethod
     def _preprocess(xds):
@@ -248,7 +249,6 @@ class UFSDataset():
             del xds["pressfc"]
         return xds
 
-
     @staticmethod
     def _cftime2time(cftime):
         """Convert cftime array to numpy.datetime64
@@ -259,20 +259,22 @@ class UFSDataset():
         Returns:
             time (array_like): with numpy.datetime64 objects
         """
-        time = np.array([
-            np.datetime64(
-                datetime(
-                    int(t.dt.year),
-                    int(t.dt.month),
-                    int(t.dt.day),
-                    int(t.dt.hour),
-                    int(t.dt.minute),
-                    int(t.dt.second))
+        time = np.array(
+            [
+                np.datetime64(
+                    datetime(
+                        int(t.dt.year),
+                        int(t.dt.month),
+                        int(t.dt.day),
+                        int(t.dt.hour),
+                        int(t.dt.minute),
+                        int(t.dt.second),
+                    )
                 )
-            for t in cftime
-            ])
+                for t in cftime
+            ]
+        )
         return time
-
 
     @staticmethod
     def _time2cftime(time):
@@ -284,35 +286,37 @@ class UFSDataset():
         Returns:
             cftime (array_like): with DatetimeJulian objects
         """
-        cftime = np.array([
-            DatetimeJulian(
-                int(t.dt.year),
-                int(t.dt.month),
-                int(t.dt.day),
-                int(t.dt.hour),
-                int(t.dt.minute),
-                int(t.dt.second),
-                has_year_zero=False)
-            for t in time
-            ])
+        cftime = np.array(
+            [
+                DatetimeJulian(
+                    int(t.dt.year),
+                    int(t.dt.month),
+                    int(t.dt.day),
+                    int(t.dt.hour),
+                    int(t.dt.minute),
+                    int(t.dt.second),
+                    has_year_zero=False,
+                )
+                for t in time
+            ]
+        )
         return cftime
 
 
 class FV3Dataset(UFSDataset):
+    zarr_name = "fv3.zarr"
+    chunks_in = {
+        "pfull": 5,
+        "grid_yt": -1,
+        "grid_xt": -1,
+    }
 
-    zarr_name   = "fv3.zarr"
-    chunks_in   = {
-            "pfull"     : 5,
-            "grid_yt"   : -1,
-            "grid_xt"   : -1,
-            }
-
-    chunks_out  = {
-            "time"      : 1,
-            "pfull"     : 5,
-            "grid_yt"   : 30,
-            "grid_xt"   : 30,
-            }
+    chunks_out = {
+        "time": 1,
+        "pfull": 5,
+        "grid_yt": 30,
+        "grid_xt": 30,
+    }
 
     def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
         xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
@@ -321,32 +325,24 @@ class FV3Dataset(UFSDataset):
         xds = xds.rename({"time": "cftime"})
         time = self._cftime2time(xds["cftime"])
         xds["time"] = xr.DataArray(
-                time,
-                coords=xds["cftime"].coords,
-                dims=xds["cftime"].dims,
-                attrs={
-                    "long_name": "time",
-                    "axis": "T"}
-                )
+            time, coords=xds["cftime"].coords, dims=xds["cftime"].dims, attrs={"long_name": "time", "axis": "T"}
+        )
         xds["ftime"] = xr.DataArray(
-                time-np.datetime64(cycle),
-                coords=xds["cftime"].coords,
-                dims=xds["cftime"].dims,
-                attrs={
-                    "long_name": "forecast_time",
-                    "description": f"time passed since {str(cycle)}",
-                    "axis": "T"},
-                )
+            time - np.datetime64(cycle),
+            coords=xds["cftime"].coords,
+            dims=xds["cftime"].dims,
+            attrs={"long_name": "forecast_time", "description": f"time passed since {str(cycle)}", "axis": "T"},
+        )
         xds = xds.swap_dims({"cftime": "time"})
 
         # convert ak/bk attrs to coordinate arrays
         for key in ["ak", "bk"]:
             if key in xds.attrs:
                 xds[key] = xr.DataArray(
-                        xds.attrs.pop(key),
-                        coords=xds["phalf"].coords,
-                        dims=xds["phalf"].dims,
-                        )
+                    xds.attrs.pop(key),
+                    coords=xds["phalf"].coords,
+                    dims=xds["phalf"].dims,
+                )
                 xds = xds.set_coords(key)
 
         # rename grid_yt.long_name to avoid typo
