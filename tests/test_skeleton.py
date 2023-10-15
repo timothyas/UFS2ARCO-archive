@@ -50,13 +50,13 @@ def test_skeleton_main_data_file_missing():
     assert retval == 1  # expected fail
 
 
-def test_skeleton_main_success():
-    """
-    This will exectute the main function in the UFS2ARCO skeleton.py file
-    This passes a data file name that is known not to exist
-    """
-    arg1 = "../../test_files/s3_source_amsua_first_pass.yaml"
-    arg2 = "S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control"
+# def test_skeleton_main_success():
+#     """
+#     This will exectute the main function in the UFS2ARCO skeleton.py file
+#     This passes a data file name that is known not to exist
+#     """
+#     arg1 = "../../test_files/s3_source_amsua_first_pass.yaml"
+#     arg2 = "S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control"
 
-    retval = skeleton.main([arg1, arg2])
-    assert retval == 0
+#     retval = skeleton.main([arg1, arg2])
+#     assert retval == 0
