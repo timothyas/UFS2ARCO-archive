@@ -56,6 +56,7 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -268,3 +269,9 @@ intersphinx_mapping = {
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)
+
+
+napoleon_custom_sections = [("Required Fields in Config", "params_style"),
+                            ("Optional Fields in Config", "params_style"),
+                            ("Sets Attributes", "params_style"),
+                            ]

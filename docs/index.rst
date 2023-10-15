@@ -36,6 +36,8 @@ Contents
    License <license>
    Authors <authors>
    Changelog <changelog>
+   Example: Read Replay Data from s3 <read_and_store_replay>
+   API <api>
 
 ..    Module Reference <api/modules>
 
