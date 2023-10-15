@@ -91,8 +91,13 @@ if __name__ == "__main__":
     #    https://docs.python.org/3/library/__main__.html
 
     # Example execution:
-    # python -m UFS2ARCO.skeleton /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml /home/leldridge/sandbox/bfg_1994010100_fhr03_control
-    # python -m UFS2ARCO.skeleton test_files/s3_source_amsua_first_pass.yaml 'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
+    #   python -m UFS2ARCO.skeleton \
+    #      /home/leldridge/sandbox/s3_source_amsua_first_pass.yaml \
+    #      /home/leldridge/sandbox/bfg_1994010100_fhr03_control
+    # or
+    #   python -m UFS2ARCO.skeleton \
+    #      test_files/s3_source_amsua_first_pass.yaml \
+    #     'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
 
     if len(sys.argv) != 3:
         _logger.error('skeleton.py called with the incorrect number of parameters:'
