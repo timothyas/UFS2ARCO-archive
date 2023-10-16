@@ -7,6 +7,7 @@ KJW: To make the testing work I had to, I think, 'install' this project as an
     from the path containing the UFS2ARCO package.  (e.g. `E:/temp/UFS2ARCO`)
 """
 
+from pathlib import Path
 from UFS2ARCO import skeleton
 
 
@@ -20,10 +21,15 @@ def test_skeleton_main_yaml_file_missing():
     This will exectute the main function in the UFS2ARCO skeleton.py file
     This passes a yaml filename that is known not to exist
     """
-    arg1 = "../../test_files/bad_yaml_filename.yaml"
-    arg2 = "S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control"
+    arg1 = Path("test_files") / "bad_yaml_filename.yaml"
+    arg2 = (
+        Path("S:/")
+        / "NOAA Ecosystem Project"
+        / "UFS2ARCO"
+        / "bfg_1994010100_fhr03_control"
+    )
 
-    retval = skeleton.main(arg1, arg2)
+    retval = skeleton.main(str(arg1), str(arg2))
     assert retval == 1  # expected fail
 
 
@@ -32,20 +38,25 @@ def test_skeleton_main_data_file_missing():
     This will exectute the main function in the UFS2ARCO skeleton.py file
     This passes a data file name that is known not to exist
     """
-    arg1 = "../../test_files/s3_source_amsua_first_pass.yaml"
-    arg2 = "S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control"
+    arg1 = Path("test_files") / "s3_source_amsua_first_pass.yaml"
+    arg2 = Path("S:/") / "NOAA Ecosystem Project" / "UFS2ARCO" / "BadDataFileName"
 
-    retval = skeleton.main(arg1, arg2)
+    retval = skeleton.main(str(arg1), str(arg2))
     assert retval == 1  # expected fail
 
 
-# def test_skeleton_main_success():
-#     """
-#     This will exectute the main function in the UFS2ARCO skeleton.py file
-#     This passes a data file name that is known not to exist
-#     """
-#     arg1 = "../../test_files/s3_source_amsua_first_pass.yaml"
-#     arg2 = "S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control"
+def test_skeleton_main_success():
+    """
+    This will exectute the main function in the UFS2ARCO skeleton.py file
+    This test should succeed
+    """
+    arg1 = Path("test_files") / "s3_source_amsua_first_pass.yaml"
+    arg2 = (
+        Path("S:/")
+        / "NOAA Ecosystem Project"
+        / "UFS2ARCO"
+        / "bfg_1994010100_fhr03_control"
+    )
 
-#     retval = skeleton.main([arg1, arg2])
-#     assert retval == 0
+    retval = skeleton.main(str(arg1), str(arg2))
+    assert retval == 0
