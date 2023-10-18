@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 import xarray as xr
 from zarr import NestedDirectoryStore
+from rechunker import rechunk
 
 from datetime import datetime, timedelta
 from cftime import DatetimeJulian
@@ -34,6 +35,8 @@ class UFSDataset:
         coords (list of str): containing static coordinate variables to store only one time
         data_vars (list of str): containing variables that evolve in time to be stored if not provided, all variables will be stored
         chunks_in, chunks_out (dict): containing chunksizes for each dimension
+        max_mem (str or int ): maximum memory to be used during rechunking, in bytes (int) or as specified (str, e.g., 100MB). If not provided, `rechunker <https://rechunker.readthedocs.io/en/latest/>`_ will not be used
+        temp_store (str, MutableMapping, or zarr.Store object, optional): place to store temporary result during rechunking, if using `rechunker <https://rechunker.readthedocs.io/en/latest/>`_
 
     Args:
         path_in (callable): map the following arguments to a path (str):
@@ -60,6 +63,9 @@ class UFSDataset:
     coords = None
     data_vars = None
     zarr_name = None
+
+    max_mem = None
+    temp_store = None
 
     @property
     def forecast_path(self):
@@ -98,7 +104,7 @@ class UFSDataset:
                 raise KeyError(f"{name}.__init__: Could not find {key} in {config_filename}, but this is required")
 
         # look for these optional inputs
-        for key in ["chunks_in", "chunks_out", "coords", "data_vars"]:
+        for key in ["chunks_in", "chunks_out", "coords", "data_vars", "max_mem", "temp_store"]:
             if key in self.config:
                 setattr(self, key, self.config[key])
             else:
@@ -114,6 +120,17 @@ class UFSDataset:
             warnings.warn(
                 f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables"
             )
+
+        if self.max_mem is None:
+            warnings.warn(
+                f"{name}.__init__: Could not find 'max_mem' in {config_filename}, will not use rechunker"
+            )
+
+        if self.max_mem is not None and self.temp_store is None:
+            raise KeyError(
+                f"{name}.__init__: Could not find 'temp_store' in {config_filename}, this will cause issues with rechunker"
+            )
+
 
         # check that file_prefixes is a list
         self.file_prefixes = [self.file_prefixes] if isinstance(self.file_prefixes, str) else self.file_prefixes
@@ -160,11 +177,7 @@ class UFSDataset:
             xds (xarray.Dataset): rechunked as specified
         """
 
-        chunks = self.chunks_out.copy()
-        for key in self.chunks_out.keys():
-            if key not in xds.dims:
-                chunks.pop(key)
-
+        chunks = self._get_relevant_chunks(xds.dims, self.chunks_out)
         xds = xds.transpose(*list(chunks.keys()))
         return xds.chunk(chunks)
 
@@ -224,10 +237,24 @@ class UFSDataset:
                 and at this particular DA window
         """
 
-        xds = self.chunk(xds)
-
         store = NestedDirectoryStore(path=self.forecast_path)
-        xds.to_zarr(store, **kwargs)
+
+        if self.max_mem is None:
+            xds = self.chunk(xds)
+            xds.to_zarr(store, **kwargs)
+
+        else:
+            chunks = self._get_relevant_chunks(xds.dims, self.chunks_out)
+            chunk_plan = rechunk(
+                    source=xds,
+                    target_chunks=chunks,
+                    max_mem=self.max_mem,
+                    target_store=store,
+                    target_options=kwargs,
+                    temp_store=self.temp_store,
+                )
+            chunk_plan.execute()
+
         print(f"Stored dataset at {self.forecast_path}")
 
     @staticmethod
@@ -301,6 +328,16 @@ class UFSDataset:
             ]
         )
         return cftime
+
+    @staticmethod
+    def _get_relevant_chunks(dims, chunks):
+        """User may provide more chunk dimensions than necessary"""
+        new_chunks = chunks.copy()
+        for key in chunks.keys():
+            if key not in dims:
+                new_chunks.pop(key)
+        return new_chunks
+
 
 
 class FV3Dataset(UFSDataset):
