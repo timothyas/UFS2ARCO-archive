@@ -4,8 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "UFS2ARCO"
-authors = [{ name = "leldr", email = "leldridge@wvhtf.org" }]
-maintainers = [{ name = "Ken Witt", email = "kwitt@wvhtf.org" }]
+authors = [
+    { name = "Lauryn Eldridge", email = "leldridge@wvhtf.org" },
+    { name = "Tim Smith", email = "tim.smith@noaa.gov" },
+]
+maintainers = [
+    { name = "Lauryn Eldridge", email = "leldridge@wvhtf.org" },
+    { name = "Tim Smith", email = "tim.smith@noaa.gov" },
+    { name = "Ken Witt", email = "kwitt@wvhtf.org" },
+]
 
 description = "Initial data conversion pipeline"
 readme = "README.rst"
@@ -55,6 +62,9 @@ Tracker = "https://github.com/HighTechnologyFoundation/UFS2ARCO/issues"
 # check out https://github.com/pypa/setuptools_scm
 version_scheme = "no-guess-dev"
 
+[tool.black]
+line-length = 119
+
 [tool.flake8]
 max-line-length = 120
 select = "F,E,W,B,B901,B902,B903"
@@ -72,9 +82,20 @@ exclude = [
     "build",
     "dist",
     ".rst",
-
 ]
-ignore = ["E722", "B001", "W503", "E203"]
+ignore = [
+    # "E722",
+    "B001",
+    "W503",
+    "E203",
+]
+# "E722" - do not use bare except, specify exception instead
+# "B001" 
+# "W503" - line break before binary operator
+# "E203" - whitespace before ‘,’, ‘;’, or ‘:’
+
+max-complexity = 10
+
 
 [tool.bumpver]
 current_version = "0.0.2"

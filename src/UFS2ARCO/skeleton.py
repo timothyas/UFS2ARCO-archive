@@ -33,6 +33,8 @@ formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s:: %(message)s"
 handler.setFormatter(formatter)
 _logger.addHandler(handler)
 
+_logger.setLevel(logging.DEBUG)
+
 
 def requested_vars_xarray(yml_fn: str, data_fn: str) -> xarray.Dataset:
     """_summary_
@@ -67,9 +69,7 @@ def main(yaml_file: str, data_file: str) -> int:
     Returns:
         int: An integer = 0 if successful, otherwise 1
     """
-    _logger.debug(
-        f"main called with parameters yaml_file: {yaml_file}, and data_file: {data_file}"
-    )
+    _logger.debug(f"main called with parameters yaml_file: {yaml_file}, and data_file: {data_file}")
 
     # /home/leldridge/sandbox/bfg_1994010100_fhr03_control
     if not pathlib.Path(yaml_file).is_file():
@@ -103,14 +103,9 @@ if __name__ == "__main__":
     #     'S:/NOAA Ecosystem Project/UFS2ARCO/bfg_1994010100_fhr03_control'
 
     if len(sys.argv) != 3:
-        _logger.error(
-            "skeleton.py called with the incorrect number of parameters:"
-            f"  Should be 2, was {len(sys.argv)-1}"
-        )
+        _logger.error(f"skeleton.py called with the incorrect number of parameters: Should be 2, was {len(sys.argv)-1}")
         sys.exit()
 
-    _logger.debug(
-        f"__main__ called with parameters {sys.argv[1:2][0]} and {sys.argv[2:3][0]}"
-    )
+    _logger.debug(f"__main__ called with parameters {sys.argv[1:2][0]} and {sys.argv[2:3][0]}")
     main(sys.argv[1:2][0], sys.argv[2:3][0])
     _logger.debug("__main__ exiting")
