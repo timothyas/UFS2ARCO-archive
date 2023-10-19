@@ -1,8 +1,9 @@
 # require packages for this file
 # python -m pip install fsspec pyyaml numpy xarray zarr cftime
 
-import os
-from os.path import join
+from pathlib import Path
+from os import path
+from typing import Dict
 import fsspec
 import yaml
 import warnings
@@ -57,22 +58,22 @@ class UFSDataset:
 
     chunks_in = None
     chunks_out = None
-    coords = None
-    data_vars = None
-    zarr_name = None
+    coords = []
+    data_vars = []
+    zarr_name = ""
 
     @property
-    def forecast_path(self):
+    def forecast_path(self) -> str:
         """Where to write forecast data variables to"""
-        return join(self.path_out, "forecast", self.zarr_name)
+        return str(Path(self.path_out) / "forecast" / self.zarr_name)
 
     @property
-    def coords_path(self):
+    def coords_path(self) -> str:
         """Where to write static coordinates to"""
-        return join(self.path_out, "coordinates", self.zarr_name)
+        return str(Path(self.path_out) / "coordinates" / self.zarr_name)
 
     @property
-    def default_open_dataset_kwargs(self):
+    def default_open_dataset_kwargs(self) -> Dict:
         kw = {
             "parallel": True,
             "chunks": self.chunks_in,
@@ -105,12 +106,12 @@ class UFSDataset:
                 print(f"{name}.__init__: Could not find {key} in {config_filename}, using default.")
 
         # warn user about not finding coords
-        if self.coords is None:
+        if len(self.coords) == 0:
             warnings.warn(
                 f"{name}.__init__: Could not find 'coords' in {config_filename}, will not store coordinate data"
             )
 
-        if self.data_vars is None:
+        if len(self.data_vars) == 0:
             warnings.warn(
                 f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables"
             )
@@ -168,7 +169,7 @@ class UFSDataset:
         xds = xds.transpose(*list(chunks.keys()))
         return xds.chunk(chunks)
 
-    def store_dataset(self, xds, **kwargs):
+    def store_dataset(self, xds: xr.Dataset, **kwargs):
         """Open all netcdf files for this model component and at this DA window, store
         coordinates one time only, select data based on
         desired forecast hour, then store it.
@@ -181,7 +182,7 @@ class UFSDataset:
         xds = xds.reset_coords()
 
         # need to store coordinates dataset only one time
-        if not os.path.isdir(self.coords_path) and self.coords is not None:
+        if not path.isdir(self.coords_path) and self.coords is not None:
             coords = [x for x in self.coords if x in xds]
             cds = xds[coords].set_coords(coords)
             if "member" in cds:
@@ -197,7 +198,7 @@ class UFSDataset:
 
         self._store_data_vars(xds, **kwargs)
 
-    def _store_coordinates(self, cds):
+    def _store_coordinates(self, cds: xr.Dataset) -> None:
         """Store the static coordinate information to zarr
 
         Args:
@@ -207,7 +208,8 @@ class UFSDataset:
         try:
             assert len(cds.data_vars) == 0
         except AssertionError:
-            msg = f"UFSDataset._store_coordinates: we should not have any data variables in this dataset, but we found some."
+            msg = "UFSDataset._store_coordinates: "
+            msg += "We should not have any data variables in this dataset, but we found some."
             msg += f"\n{cds.data_vars}"
             raise AttributeError(msg)
 
@@ -216,7 +218,7 @@ class UFSDataset:
         cds.to_zarr(store, mode="w")
         print(f"Stored coordinate dataset at {self.coords_path}")
 
-    def _store_data_vars(self, xds, **kwargs):
+    def _store_data_vars(self, xds: xr.Dataset, **kwargs) -> None:
         """Store the data variables
 
         Args:
