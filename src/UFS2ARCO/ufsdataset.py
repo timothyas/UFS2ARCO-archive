@@ -308,22 +308,21 @@ class UFSDataset:
 
 
 class FV3Dataset(UFSDataset):
-    chunks_in = {
-        "pfull": 5,
-        "grid_yt": -1,
-        "grid_xt": -1,
-    }
-
-    chunks_out = {
-        "time": 1,
-        "pfull": 5,
-        "grid_yt": 30,
-        "grid_xt": 30,
-    }
-
     def __init__(self, *args, **kwargs):
         super(FV3Dataset, self).__init__(*args, **kwargs)
         self.zarr_name = "fv3.zarr"
+        self.chunks_in = {
+            "pfull": 5,
+            "grid_yt": -1,
+            "grid_xt": -1,
+        }
+
+        self.chunks_out = {
+            "time": 1,
+            "pfull": 5,
+            "grid_yt": 30,
+            "grid_xt": 30,
+        }
 
     def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
         xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
