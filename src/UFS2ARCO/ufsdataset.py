@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from os import path
-from typing import Dict
+from typing import Dict, List, Callable
 import fsspec
 import yaml
 import warnings
@@ -52,16 +52,6 @@ class UFSDataset:
         config (dict): with the configuration provided by the file
     """
 
-    path_out = ""
-    forecast_hours = None
-    file_prefixes = None
-
-    chunks_in = None
-    chunks_out = None
-    coords = []
-    data_vars = []
-    zarr_name = ""
-
     @property
     def forecast_path(self) -> str:
         """Where to write forecast data variables to"""
@@ -82,11 +72,23 @@ class UFSDataset:
         }
         return kw
 
-    def __init__(self, path_in, config_filename):
+    def __init__(self, path_in: Callable, config_filename: str) -> None:
         super(UFSDataset, self).__init__()
         name = self.__class__.__name__  # e.g., FV3Dataset, MOMDataset
 
-        self.path_in = path_in
+        # create and initialze instance variable for class attributes
+        self.path_out: str = ""
+        self.forecast_hours: List[int] = []
+        self.file_prefixes: List[str] = []
+
+        self.chunks_in: Dict = {}
+        self.chunks_out: Dict = {}
+        self.coords: List[str] = []
+        self.data_vars: List[str] = []
+        self.zarr_name: str = ""
+
+        self.path_in: Callable = path_in
+
         with open(config_filename, "r") as f:
             contents = yaml.safe_load(f)
             self.config = contents[name]
@@ -119,7 +121,7 @@ class UFSDataset:
         # check that file_prefixes is a list
         self.file_prefixes = [self.file_prefixes] if isinstance(self.file_prefixes, str) else self.file_prefixes
 
-    def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
+    def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
         """Read data from a single DA cycle
 
         Args:
@@ -306,7 +308,6 @@ class UFSDataset:
 
 
 class FV3Dataset(UFSDataset):
-    zarr_name = "fv3.zarr"
     chunks_in = {
         "pfull": 5,
         "grid_yt": -1,
@@ -320,7 +321,11 @@ class FV3Dataset(UFSDataset):
         "grid_xt": 30,
     }
 
-    def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super(FV3Dataset, self).__init__(*args, **kwargs)
+        self.zarr_name = "fv3.zarr"
+
+    def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
         xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
 
         # Deal with time
