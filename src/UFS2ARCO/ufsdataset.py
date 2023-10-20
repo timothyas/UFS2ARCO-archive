@@ -89,46 +89,45 @@ class UFSDataset:
 
     def __init__(self, path_in, config_filename):
         super(UFSDataset, self).__init__()
-        name = self.__class__.__name__  # e.g., FV3Dataset, MOMDataset
+        self.name = self.__class__.__name__  # e.g., FV3Dataset, MOMDataset
 
         self.path_in = path_in
         with open(config_filename, "r") as f:
             contents = yaml.safe_load(f)
-            self.config = contents[name]
+            self.config = contents[self.name]
 
         # look for these requited inputs
         for key in ["path_out", "forecast_hours", "file_prefixes"]:
             try:
                 setattr(self, key, self.config[key])
             except KeyError:
-                raise KeyError(f"{name}.__init__: Could not find {key} in {config_filename}, but this is required")
+                raise KeyError(f"{self.name}.__init__: Could not find {key} in {config_filename}, but this is required")
 
         # look for these optional inputs
         for key in ["chunks_in", "chunks_out", "coords", "data_vars", "max_mem", "temp_store"]:
             if key in self.config:
                 setattr(self, key, self.config[key])
             else:
-                print(f"{name}.__init__: Could not find {key} in {config_filename}, using default.")
+                if "chunks" in key:
+                    warnings.warn (f"{self.name}.__init__: Could not find {key} in {config_filename}, using default.")
 
-        # warn user about not finding coords
-        if self.coords is None:
-            warnings.warn(
-                f"{name}.__init__: Could not find 'coords' in {config_filename}, will not store coordinate data"
-            )
+                elif key == "max_mem":
+                    warnings.warn(
+                        f"{self.name}.__init__: Could not find 'max_mem' in {config_filename}, will not use rechunker"
+                    )
 
-        if self.data_vars is None:
-            warnings.warn(
-                f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables"
-            )
-
-        if self.max_mem is None:
-            warnings.warn(
-                f"{name}.__init__: Could not find 'max_mem' in {config_filename}, will not use rechunker"
-            )
+                elif key == "coords":
+                    warnings.warn(
+                        f"{self.name}.__init__: Could not find 'coords' in {config_filename}, will not store coordinate data"
+                    )
+                elif key == "data_vars":
+                    warnings.warn(
+                        f"{self.name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables"
+                    )
 
         if self.max_mem is not None and self.temp_store is None:
             raise KeyError(
-                f"{name}.__init__: Could not find 'temp_store' in {config_filename}, this will cause issues with rechunker"
+                f"{self.name}.__init__: Found 'max_mem' but not 'temp_store' in {config_filename}, this will cause issues with rechunker"
             )
 
 
@@ -205,7 +204,12 @@ class UFSDataset:
         # make various time variables as coordinates
         xds = xds.set_coords(["time", "cftime", "ftime"])
         if self.data_vars is not None:
-            data_vars = [x for x in self.data_vars if x in xds]
+            data_vars = []
+            for dv in self.data_vars:
+                if dv in xds:
+                    data_vars.append(dv)
+                else:
+                    warnings.warn(f"{self.name}.store_dataset: could not find '{dv}' in dataset, skipping this variable.")
             xds = xds[data_vars]
 
         self._store_data_vars(xds, **kwargs)
@@ -371,6 +375,7 @@ class FV3Dataset(UFSDataset):
             attrs={"long_name": "forecast_time", "description": f"time passed since {str(cycle)}", "axis": "T"},
         )
         xds = xds.swap_dims({"cftime": "time"})
+        xds = xds.set_coords(["cftime", "ftime"])
 
         # convert ak/bk attrs to coordinate arrays
         for key in ["ak", "bk"]:
