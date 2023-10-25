@@ -174,20 +174,22 @@ class UFSDataset:
         xds = xds.transpose(*list(chunks.keys()))
         return xds.chunk(chunks)
 
-    def store_dataset(self, xds, coords_kwargs=None, **kwargs):
+    def store_dataset(self, xds, store_coords=False, coords_kwargs=None, **kwargs):
         """Open all netcdf files for this model component and at this DA window, store
         coordinates one time only, select data based on
         desired forecast hour, then store it.
 
         Args:
             xds (xarray.Dataset): as provided by :meth:`open_dataset`
+            store_coords (bool, optional): if True, store coordinates in separate directory
+            coords_kwargs (dict, optional): passed to :func:`xarray.to_zarr` via :meth:`_store_coordinates`
             kwargs (dict): optional arguments passed to :func:`xarray.to_zarr` via :meth:`_store_data_vars`
         """
 
         xds = xds.reset_coords()
 
         # need to store coordinates dataset only one time
-        if not os.path.isdir(self.coords_path) and self.coords is not None:
+        if store_coords:
             coords = [x for x in self.coords if x in xds]
             cds = xds[coords].set_coords(coords)
             if "member" in cds:
