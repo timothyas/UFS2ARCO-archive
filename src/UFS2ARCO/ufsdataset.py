@@ -174,7 +174,7 @@ class UFSDataset:
         xds = xds.transpose(*list(chunks.keys()))
         return xds.chunk(chunks)
 
-    def store_dataset(self, xds, **kwargs):
+    def store_dataset(self, xds, coords_kwargs=None, **kwargs):
         """Open all netcdf files for this model component and at this DA window, store
         coordinates one time only, select data based on
         desired forecast hour, then store it.
@@ -192,7 +192,8 @@ class UFSDataset:
             cds = xds[coords].set_coords(coords)
             if "member" in cds:
                 cds = cds.isel(member=0).drop("member")
-            self._store_coordinates(cds)
+            ckw = dict() if coords_kwargs is None else coords_kwargs
+            self._store_coordinates(cds, **ckw)
 
         # now data variables at this cycle
         # make various time variables as coordinates
@@ -203,7 +204,7 @@ class UFSDataset:
 
         self._store_data_vars(xds, **kwargs)
 
-    def _store_coordinates(self, cds):
+    def _store_coordinates(self, cds, **kwargs):
         """Store the static coordinate information to zarr
 
         Args:
@@ -219,7 +220,7 @@ class UFSDataset:
 
         # these don't need to be chunked, coordinates are opened in memory
         store = NestedDirectoryStore(path=self.coords_path) if self.is_nested else self.coords_path
-        cds.to_zarr(store, mode="w")
+        cds.to_zarr(store, **kwargs)
         print(f"Stored coordinate dataset at {self.coords_path}")
 
     def _store_data_vars(self, xds, **kwargs):
