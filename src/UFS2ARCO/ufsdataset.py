@@ -32,6 +32,7 @@ class UFSDataset:
 
     Optional Fields in Config:
         coords (list of str): containing static coordinate variables to store only one time
+        coords_path_out (str): path to store coordinates, if not provided then store under 'coordinates' directory in data_path
         data_vars (list of str): containing variables that evolve in time to be stored if not provided, all variables will be stored
         chunks_in, chunks_out (dict): containing chunksizes for each dimension
 
@@ -62,14 +63,17 @@ class UFSDataset:
     zarr_name = None
 
     @property
-    def forecast_path(self):
+    def data_path(self):
         """Where to write forecast data variables to"""
-        return join(self.path_out, "forecast", self.zarr_name)
+        return join(self.path_out, self.zarr_name)
 
     @property
     def coords_path(self):
         """Where to write static coordinates to"""
-        return join(self.path_out, "coordinates", self.zarr_name)
+        if self.coords_path_out is None:
+            return join(self.path_out, "coordinates", self.zarr_name)
+        else:
+            return join(self.coords_path_out, self.zarr_name)
 
     @property
     def default_open_dataset_kwargs(self):
@@ -98,7 +102,7 @@ class UFSDataset:
                 raise KeyError(f"{name}.__init__: Could not find {key} in {config_filename}, but this is required")
 
         # look for these optional inputs
-        for key in ["chunks_in", "chunks_out", "coords", "data_vars"]:
+        for key in ["chunks_in", "chunks_out", "coords", "data_vars", "coords_path_out"]:
             if key in self.config:
                 setattr(self, key, self.config[key])
             else:
@@ -226,9 +230,9 @@ class UFSDataset:
 
         xds = self.chunk(xds)
 
-        store = NestedDirectoryStore(path=self.forecast_path)
+        store = NestedDirectoryStore(path=self.data_path)
         xds.to_zarr(store, **kwargs)
-        print(f"Stored dataset at {self.forecast_path}")
+        print(f"Stored dataset at {self.data_path}")
 
     @staticmethod
     def _preprocess(xds):
