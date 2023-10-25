@@ -28,7 +28,7 @@ class UFSDataset:
     Required Fields in Config:
         path_out (str): the outermost directory to store the dataset
         forecast_hours (list of int): with the forecast hours to save
-        file_prefixes (list of str): with the filename prefixes inside of each cycle's directory,
+        file_prefixes (list of str): with the filename prefixes to read, e.g. ["sfg", "bfg"] to read all files starting with this prefix at this cycle, for all forecast_hours
 
     Optional Fields in Config:
         coords (list of str): containing static coordinate variables to store only one time
@@ -38,10 +38,8 @@ class UFSDataset:
 
     Args:
         path_in (callable): map the following arguments to a path (str):
-        cycle (datetime.datetime): with the date/time of the current DA cycle (to be read)
-        forecast_hours (list of int): with the hours of forecast data to read, e.g. [3, 6]
-        file_prefixes (list of str): with the filename prefixes to read, e.g. ["sfg", "bfg"] to read all files starting with this prefix at this cycle, for all forecast_hours
         config_filename (str): to yaml file containing the overall configuration
+        is_nested (bool, optional): if True write a :class:`NestedDirectoryStore`, otherwise write Zarr's default directory structure
 
     Sets Attributes:
         path_out (str): the outermost directory to store the dataset
@@ -50,6 +48,7 @@ class UFSDataset:
         coords, data_vars (list): with variable names of coordinates and data variables
         chunks_in, chunks_out (dict): specifying how to chunk the data when reading and writing
         config (dict): with the configuration provided by the file
+        is_nested (bool): whether or not to write with :class:`NestedDirectoryStore`
     """
 
     path_out = ""
@@ -61,6 +60,8 @@ class UFSDataset:
     coords = None
     data_vars = None
     zarr_name = None
+
+    is_nested = None
 
     @property
     def data_path(self):
@@ -85,11 +86,12 @@ class UFSDataset:
         }
         return kw
 
-    def __init__(self, path_in, config_filename):
+    def __init__(self, path_in, config_filename, is_nested=False):
         super(UFSDataset, self).__init__()
         name = self.__class__.__name__  # e.g., FV3Dataset, MOMDataset
 
         self.path_in = path_in
+        self.is_nested = is_nested
         with open(config_filename, "r") as f:
             contents = yaml.safe_load(f)
             self.config = contents[name]
@@ -216,7 +218,7 @@ class UFSDataset:
             raise AttributeError(msg)
 
         # these don't need to be chunked, coordinates are opened in memory
-        store = NestedDirectoryStore(path=self.coords_path)
+        store = NestedDirectoryStore(path=self.coords_path) if self.is_nested else self.coords_path
         cds.to_zarr(store, mode="w")
         print(f"Stored coordinate dataset at {self.coords_path}")
 
@@ -230,7 +232,7 @@ class UFSDataset:
 
         xds = self.chunk(xds)
 
-        store = NestedDirectoryStore(path=self.data_path)
+        store = NestedDirectoryStore(path=self.data_path) if self.is_nested else self.data_path
         xds.to_zarr(store, **kwargs)
         print(f"Stored dataset at {self.data_path}")
 
