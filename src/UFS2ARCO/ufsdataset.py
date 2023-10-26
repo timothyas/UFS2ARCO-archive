@@ -331,15 +331,26 @@ class FV3Dataset(UFSDataset):
         xds = xds.rename({"time": "cftime"})
         time = self._cftime2time(xds["cftime"])
         xds["time"] = xr.DataArray(
-            time, coords=xds["cftime"].coords, dims=xds["cftime"].dims, attrs={"long_name": "time", "axis": "T"}
+            time,
+            coords=xds["cftime"].coords,
+            dims=xds["cftime"].dims,
+            attrs={
+                "long_name": "time",
+                "axis": "T",
+            },
         )
         xds["ftime"] = xr.DataArray(
             time - np.datetime64(cycle),
             coords=xds["cftime"].coords,
             dims=xds["cftime"].dims,
-            attrs={"long_name": "forecast_time", "description": f"time passed since {str(cycle)}", "axis": "T"},
+            attrs={
+                "long_name": "forecast_time",
+                "description": f"time passed since {str(cycle)}",
+                "axis": "T",
+            },
         )
         xds = xds.swap_dims({"cftime": "time"})
+        xds = xds.set_coords(["time", "cftime", "ftime"])
 
         # convert ak/bk attrs to coordinate arrays
         for key in ["ak", "bk"]:
@@ -353,4 +364,57 @@ class FV3Dataset(UFSDataset):
 
         # rename grid_yt.long_name to avoid typo
         xds["grid_yt"].attrs["long_name"] = "T-cell latitude"
+        return xds
+
+
+class MOM6Dataset(UFSDataset):
+    def __init__(self, *args, **kwargs):
+        super(MOM6Dataset, self).__init__(*args, **kwargs)
+        self.zarr_name = "mom6.zarr"
+        self.chunks_in = {
+            "z_l"       : 5,
+            "z_i"       : 5,
+            "yh"        : -1,
+            "xh"        : -1,
+            "yq"        : -1,
+            "xq"        : -1,
+        }
+
+        self.chunks_out = {
+            "time"      : 1,
+            "z_l"       : 5,
+            "z_i"       : 5,
+            "yh"        : 30,
+            "xh"        : 30,
+            "yq"        : 30,
+            "xq"        : 30,
+        }
+
+    def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
+        xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
+
+        # Deal with time
+        xds = xds.rename({"time": "cftime"})
+        time = self._cftime2time(xds["cftime"])
+        xds["time"] = xr.DataArray(
+                time,
+                coords=xds["cftime"].coords,
+                dims=xds["cftime"].dims,
+                attrs={
+                    "long_name": "time",
+                    "axis": "T",
+                },
+        )
+        xds["ftime"] = xr.DataArray(
+                time-np.datetime64(cycle),
+                coords=xds["cftime"].coords,
+                dims=xds["cftime"].dims,
+                attrs={
+                    "long_name": "forecast_time",
+                    "description": f"time passed since {str(cycle)}",
+                    "axis": "T",
+                },
+        )
+        xds = xds.swap_dims({"cftime": "time"})
+        xds = xds.set_coords(["time", "cftime", "ftime"])
         return xds

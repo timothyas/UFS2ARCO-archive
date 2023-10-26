@@ -53,3 +53,52 @@ FV3Dataset:
         - f10m
         - sfcr
         - land
+
+MOM6Dataset:
+    file_prefixes:
+        - ocn_
+    path_out        : "replay-1deg"
+    forecast_hours  : [0]
+    chunks_in:
+        time        : 1
+        z_l         : 5
+        z_i         : 5
+        yh          : -1
+        xh          : -1
+        yq          : -1
+        xq          : -1
+
+    chunks_out:
+        time        : 1
+        z_l         : 5
+        z_i         : 5
+        yh          : 30
+        xh          : 30
+        yq          : 30
+        xq          : 30
+
+    coords:
+        - xh
+        - xq
+        - yh
+        - yq
+        - z_l
+        - geolon_c
+        - geolat_c
+        - geolon_u
+        - geolat_u
+        - geolon_v
+        - geolat_v
+        - wet_c
+        - wet_u
+        - wet_v
+        - sin_rot
+        - cos_rot
+
+    data_vars:
+        - uo
+        - vo
+        - temp
+        - so
+        - SSH
+        - MLD_0125
