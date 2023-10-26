@@ -6,6 +6,7 @@ from os.path import join
 import fsspec
 import yaml
 import warnings
+import itertools
 
 import numpy as np
 import xarray as xr
@@ -336,8 +337,10 @@ class FV3Dataset(UFSDataset):
         xds["time"] = xr.DataArray(
             time, coords=xds["cftime"].coords, dims=xds["cftime"].dims, attrs={"long_name": "time", "axis": "T"}
         )
+        n_output_per_cycle = len(time) // len(cycle)
+        ftime = np.array([these_times - np.datetime64(this_cycle) for these_times, this_cycle in zip(list(batched(time, n_output_per_cycle)), cycle)]).flatten()
         xds["ftime"] = xr.DataArray(
-            time - np.datetime64(cycle),
+            ftime,
             coords=xds["cftime"].coords,
             dims=xds["cftime"].dims,
             attrs={"long_name": "forecast_time", "description": f"time passed since {str(cycle)}", "axis": "T"},
@@ -357,3 +360,12 @@ class FV3Dataset(UFSDataset):
         # rename grid_yt.long_name to avoid typo
         xds["grid_yt"].attrs["long_name"] = "T-cell latitude"
         return xds
+
+
+def batched(iterable, n):
+    # batched('ABCDEFG', 3) --> ABC DEF G
+    if n < 1:
+        raise ValueError('n must be at least one')
+    it = iter(iterable)
+    while batch := tuple(itertools.islice(it, n)):
+        yield batch
