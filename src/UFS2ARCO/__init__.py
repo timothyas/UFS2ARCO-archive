@@ -8,4 +8,5 @@ Define package metadata to be visible when the package is imported
 
 __version__ = "0.0.2"
 
-from .ufsdataset import FV3Dataset, MOM6Dataset
+from .fv3 import FV3Dataset
+from .mom6 import MOM6Dataset

@@ -14,9 +14,9 @@ FV3Dataset:
 
     chunks_out:
         time        : 1
-        pfull       : 5
-        grid_yt     : 30
-        grid_xt     : 30
+        pfull       : 127
+        grid_yt     : 60
+        grid_xt     : 60
 
     coords:
         - phalf
@@ -70,12 +70,12 @@ MOM6Dataset:
 
     chunks_out:
         time        : 1
-        z_l         : 5
-        z_i         : 5
-        yh          : 30
-        xh          : 30
-        yq          : 30
-        xq          : 30
+        z_l         : -1
+        z_i         : -1
+        yh          : 60
+        xh          : 60
+        yq          : 60
+        xq          : 60
 
     coords:
         - xh

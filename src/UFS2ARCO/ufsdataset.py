@@ -184,7 +184,7 @@ class UFSDataset:
         xds = xds.reset_coords()
 
         # need to store coordinates dataset only one time
-        if not path.isdir(self.coords_path) and self.coords is not None:
+        if not path.isdir(self.coords_path) and len(self.coords) > 0:
             coords = [x for x in self.coords if x in xds]
             cds = xds[coords].set_coords(coords)
             if "member" in cds:
@@ -194,7 +194,7 @@ class UFSDataset:
         # now data variables at this cycle
         # make various time variables as coordinates
         xds = xds.set_coords(["time", "cftime", "ftime"])
-        if self.data_vars is not None:
+        if len(self.data_vars) > 0:
             data_vars = [x for x in self.data_vars if x in xds]
             xds = xds[data_vars]
 
@@ -305,116 +305,3 @@ class UFSDataset:
             ]
         )
         return cftime
-
-
-class FV3Dataset(UFSDataset):
-    def __init__(self, *args, **kwargs):
-        super(FV3Dataset, self).__init__(*args, **kwargs)
-        self.zarr_name = "fv3.zarr"
-        self.chunks_in = {
-            "pfull": 5,
-            "grid_yt": -1,
-            "grid_xt": -1,
-        }
-
-        self.chunks_out = {
-            "time": 1,
-            "pfull": 5,
-            "grid_yt": 30,
-            "grid_xt": 30,
-        }
-
-    def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
-        xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
-
-        # Deal with time
-        xds = xds.rename({"time": "cftime"})
-        time = self._cftime2time(xds["cftime"])
-        xds["time"] = xr.DataArray(
-            time,
-            coords=xds["cftime"].coords,
-            dims=xds["cftime"].dims,
-            attrs={
-                "long_name": "time",
-                "axis": "T",
-            },
-        )
-        xds["ftime"] = xr.DataArray(
-            time - np.datetime64(cycle),
-            coords=xds["cftime"].coords,
-            dims=xds["cftime"].dims,
-            attrs={
-                "long_name": "forecast_time",
-                "description": f"time passed since {str(cycle)}",
-                "axis": "T",
-            },
-        )
-        xds = xds.swap_dims({"cftime": "time"})
-        xds = xds.set_coords(["time", "cftime", "ftime"])
-
-        # convert ak/bk attrs to coordinate arrays
-        for key in ["ak", "bk"]:
-            if key in xds.attrs:
-                xds[key] = xr.DataArray(
-                    xds.attrs.pop(key),
-                    coords=xds["phalf"].coords,
-                    dims=xds["phalf"].dims,
-                )
-                xds = xds.set_coords(key)
-
-        # rename grid_yt.long_name to avoid typo
-        xds["grid_yt"].attrs["long_name"] = "T-cell latitude"
-        return xds
-
-
-class MOM6Dataset(UFSDataset):
-    def __init__(self, *args, **kwargs):
-        super(MOM6Dataset, self).__init__(*args, **kwargs)
-        self.zarr_name = "mom6.zarr"
-        self.chunks_in = {
-            "z_l"       : 5,
-            "z_i"       : 5,
-            "yh"        : -1,
-            "xh"        : -1,
-            "yq"        : -1,
-            "xq"        : -1,
-        }
-
-        self.chunks_out = {
-            "time"      : 1,
-            "z_l"       : 5,
-            "z_i"       : 5,
-            "yh"        : 30,
-            "xh"        : 30,
-            "yq"        : 30,
-            "xq"        : 30,
-        }
-
-    def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
-        xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
-
-        # Deal with time
-        xds = xds.rename({"time": "cftime"})
-        time = self._cftime2time(xds["cftime"])
-        xds["time"] = xr.DataArray(
-                time,
-                coords=xds["cftime"].coords,
-                dims=xds["cftime"].dims,
-                attrs={
-                    "long_name": "time",
-                    "axis": "T",
-                },
-        )
-        xds["ftime"] = xr.DataArray(
-                time-np.datetime64(cycle),
-                coords=xds["cftime"].coords,
-                dims=xds["cftime"].dims,
-                attrs={
-                    "long_name": "forecast_time",
-                    "description": f"time passed since {str(cycle)}",
-                    "axis": "T",
-                },
-        )
-        xds = xds.swap_dims({"cftime": "time"})
-        xds = xds.set_coords(["time", "cftime", "ftime"])
-        return xds
