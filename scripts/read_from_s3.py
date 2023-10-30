@@ -4,7 +4,7 @@ import time
 import sys
 
 sys.path.append("../src")
-from UFS2ARCO.fv3dataset import FV3Dataset
+from UFS2ARCO import FV3Dataset
 
 
 def replay_path(date: datetime.datetime, fhrs: list, file_prefixes: list):
