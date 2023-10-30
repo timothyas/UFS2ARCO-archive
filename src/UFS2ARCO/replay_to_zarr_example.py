@@ -10,6 +10,8 @@ folder './scripts' and configures various aspects of this demo.
 # required dependancies
 # python -m pip install s3fs
 # python -m pip install dask
+# python -m pip install xarray
+# python -m pip install h5netcdf
 
 from datetime import datetime
 import sys
@@ -21,7 +23,7 @@ import xarray as xr
 # This assumes that the UFS2ARCO package is installed or located in a src folder
 # relative to the execution path
 sys.path.append("./src")
-from UFS2ARCO import FV3Dataset
+from UFS2ARCO.fv3dataset import FV3Dataset
 
 
 def replay_path(date: datetime, forecast_hours: List[int], file_prefixes: List[str]) -> List[str]:
