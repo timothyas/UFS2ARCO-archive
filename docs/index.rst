@@ -36,7 +36,8 @@ Contents
    License <license>
    Authors <authors>
    Changelog <changelog>
-   Example: Read Replay Data from s3 <read_and_store_replay>
+   Example: Read Atmosphere Replay Data from s3 <read_and_store_replay>
+   Example: Read Ocean Replay Data from s3 <read_and_store_ocean>
    API <api>
 
 ..    Module Reference <api/modules>

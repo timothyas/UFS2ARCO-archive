@@ -1,12 +1,12 @@
 # require packages for this file
 # python -m pip install fsspec pyyaml numpy xarray zarr cftime
 
-import os
-from os.path import join
+from pathlib import Path
+from os import path
+from typing import Dict, List, Callable
 import fsspec
 import yaml
 import warnings
-import itertools
 
 import numpy as np
 import xarray as xr
@@ -52,33 +52,21 @@ class UFSDataset:
         is_nested (bool): whether or not to write with :class:`NestedDirectoryStore`
     """
 
-    path_out = ""
-    forecast_hours = None
-    file_prefixes = None
-
-    chunks_in = None
-    chunks_out = None
-    coords = None
-    data_vars = None
-    zarr_name = None
-
-    is_nested = None
-
     @property
     def data_path(self):
         """Where to write forecast data variables to"""
-        return join(self.path_out, self.zarr_name)
+        return str(Path(self.path_out) / self.zarr_name)
 
     @property
-    def coords_path(self):
+    def coords_path(self) -> str:
         """Where to write static coordinates to"""
         if self.coords_path_out is None:
-            return join(self.path_out, "coordinates", self.zarr_name)
+            return str(Path(self.path_out) / "coordinates" / self.zarr_name)
         else:
-            return join(self.coords_path_out, self.zarr_name)
+            return str(Path(self.coords_path_out) / self.zarr_name)
 
     @property
-    def default_open_dataset_kwargs(self):
+    def default_open_dataset_kwargs(self) -> Dict:
         kw = {
             "parallel": True,
             "chunks": self.chunks_in,
@@ -87,12 +75,23 @@ class UFSDataset:
         }
         return kw
 
-    def __init__(self, path_in, config_filename, is_nested=False):
+    def __init__(self, path_in: Callable, config_filename: str, is_nested: bool = False) -> None:
         super(UFSDataset, self).__init__()
         name = self.__class__.__name__  # e.g., FV3Dataset, MOMDataset
 
-        self.path_in = path_in
-        self.is_nested = is_nested
+        # create and initialze instance variable for class attributes
+        self.path_in: Callable = path_in
+        self.is_nested: bool = is_nested
+        self.path_out: str = ""
+        self.forecast_hours: List[int] = []
+        self.file_prefixes: List[str] = []
+
+        self.chunks_in: Dict = {}
+        self.chunks_out: Dict = {}
+        self.coords: List[str] = []
+        self.data_vars: List[str] = []
+        self.zarr_name: str = ""
+
         with open(config_filename, "r") as f:
             contents = yaml.safe_load(f)
             self.config = contents[name]
@@ -112,12 +111,12 @@ class UFSDataset:
                 print(f"{name}.__init__: Could not find {key} in {config_filename}, using default.")
 
         # warn user about not finding coords
-        if self.coords is None:
+        if len(self.coords) == 0:
             warnings.warn(
                 f"{name}.__init__: Could not find 'coords' in {config_filename}, will not store coordinate data"
             )
 
-        if self.data_vars is None:
+        if len(self.data_vars) == 0:
             warnings.warn(
                 f"{name}.__init__: Could not find 'data_vars' in {config_filename}, will store all data variables"
             )
@@ -125,7 +124,7 @@ class UFSDataset:
         # check that file_prefixes is a list
         self.file_prefixes = [self.file_prefixes] if isinstance(self.file_prefixes, str) else self.file_prefixes
 
-    def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
+    def open_dataset(self, cycle: datetime, fsspec_kwargs=None, **kwargs):
         """Read data from a single DA cycle
 
         Args:
@@ -175,7 +174,11 @@ class UFSDataset:
         xds = xds.transpose(*list(chunks.keys()))
         return xds.chunk(chunks)
 
-    def store_dataset(self, xds, store_coords=False, coords_kwargs=None, **kwargs):
+    def store_dataset(self,
+        xds: xr.Dataset,
+        store_coords: bool = False,
+        coords_kwargs=None,
+        **kwargs) -> None:
         """Open all netcdf files for this model component and at this DA window, store
         coordinates one time only, select data based on
         desired forecast hour, then store it.
@@ -201,13 +204,13 @@ class UFSDataset:
         # now data variables at this cycle
         # make various time variables as coordinates
         xds = xds.set_coords(["time", "cftime", "ftime"])
-        if self.data_vars is not None:
+        if len(self.data_vars) > 0:
             data_vars = [x for x in self.data_vars if x in xds]
             xds = xds[data_vars]
 
         self._store_data_vars(xds, **kwargs)
 
-    def _store_coordinates(self, cds, **kwargs):
+    def _store_coordinates(self, cds: xr.Dataset, **kwargs) -> None:
         """Store the static coordinate information to zarr
 
         Args:
@@ -217,8 +220,9 @@ class UFSDataset:
         try:
             assert len(cds.data_vars) == 0
         except AssertionError:
-            msg = f"UFSDataset._store_coordinates: we should not have any data variables in this dataset, but we found some."
-            msg += f"\n{cds.data_vars}"
+            msg = "UFSDataset._store_coordinates: "+\
+                f"We should not have any data variables in this dataset, but we found some."+\
+                f"\n{cds.data_vars}"
             raise AttributeError(msg)
 
         # these don't need to be chunked, coordinates are opened in memory
@@ -226,7 +230,7 @@ class UFSDataset:
         cds.to_zarr(store, **kwargs)
         print(f"Stored coordinate dataset at {self.coords_path}")
 
-    def _store_data_vars(self, xds, **kwargs):
+    def _store_data_vars(self, xds: xr.Dataset, **kwargs) -> None:
         """Store the data variables
 
         Args:
@@ -311,61 +315,3 @@ class UFSDataset:
             ]
         )
         return cftime
-
-
-class FV3Dataset(UFSDataset):
-    zarr_name = "fv3.zarr"
-    chunks_in = {
-        "pfull": 5,
-        "grid_yt": -1,
-        "grid_xt": -1,
-    }
-
-    chunks_out = {
-        "time": 1,
-        "pfull": 5,
-        "grid_yt": 30,
-        "grid_xt": 30,
-    }
-
-    def open_dataset(self, cycle, fsspec_kwargs=None, **kwargs):
-        xds = super().open_dataset(cycle, fsspec_kwargs, **kwargs)
-
-        # Deal with time
-        xds = xds.rename({"time": "cftime"})
-        time = self._cftime2time(xds["cftime"])
-        xds["time"] = xr.DataArray(
-            time, coords=xds["cftime"].coords, dims=xds["cftime"].dims, attrs={"long_name": "time", "axis": "T"}
-        )
-        n_output_per_cycle = len(time) // len(cycle)
-        ftime = np.array([these_times - np.datetime64(this_cycle) for these_times, this_cycle in zip(list(batched(time, n_output_per_cycle)), cycle)]).flatten()
-        xds["ftime"] = xr.DataArray(
-            ftime,
-            coords=xds["cftime"].coords,
-            dims=xds["cftime"].dims,
-            attrs={"long_name": "forecast_time", "description": f"time passed since {str(cycle)}", "axis": "T"},
-        )
-        xds = xds.swap_dims({"cftime": "time"})
-
-        # convert ak/bk attrs to coordinate arrays
-        for key in ["ak", "bk"]:
-            if key in xds.attrs:
-                xds[key] = xr.DataArray(
-                    xds.attrs.pop(key),
-                    coords=xds["phalf"].coords,
-                    dims=xds["phalf"].dims,
-                )
-                xds = xds.set_coords(key)
-
-        # rename grid_yt.long_name to avoid typo
-        xds["grid_yt"].attrs["long_name"] = "T-cell latitude"
-        return xds
-
-
-def batched(iterable, n):
-    # batched('ABCDEFG', 3) --> ABC DEF G
-    if n < 1:
-        raise ValueError('n must be at least one')
-    it = iter(iterable)
-    while batch := tuple(itertools.islice(it, n)):
-        yield batch
